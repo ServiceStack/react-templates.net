@@ -198,7 +198,7 @@ export default function HomePage() {
                 "Unified Proxy Architecture"
               ]}
               command="npx create-net next-rsc ProjectName"
-              githubTemplate="https://github.com/new?template_name=nextjs&template_owner=NetCoreTemplates"
+              githubTemplate="https://github.com/new?template_name=next-rsc&template_owner=NetCoreTemplates"
               diagramMode={diagramMode}
               setDiagramMode={setDiagramMode}
             />
@@ -215,7 +215,7 @@ export default function HomePage() {
                 "Zero Node.js in Production"
               ]}
               command="npx create-net next-static ProjectName"
-              githubTemplate="https://github.com/new?template_name=nextjs-static&template_owner=NetCoreTemplates"
+              githubTemplate="https://github.com/new?template_name=next-static&template_owner=NetCoreTemplates"
               reversed
               diagramMode={diagramMode}
               setDiagramMode={setDiagramMode}
