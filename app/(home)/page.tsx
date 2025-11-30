@@ -144,7 +144,7 @@ export default function HomePage() {
                 The Best of Both Worlds
               </h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                .NET React Templates unite <strong>React, Tailwind CSS & TypeScript</strong> with ServiceStack's powerful .NET backend—creating the ultimate
+                .NET React Templates unite <strong>React, Tailwind CSS & TypeScript</strong> with ServiceStack's powerful .NET backend - creating the ultimate
                 environment for building sophisticated UIs at lightning speed. Experience true full-stack type safety with APIs that flow
                 seamlessly from C# to TypeScript.
               </p>
