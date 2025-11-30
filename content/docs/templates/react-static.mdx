@@ -165,58 +165,6 @@ For deployment instructions, including Docker + Kamal setup and GitHub Actions c
 
 **[Deployment Documentation](/docs/deployment)**
 
-## AutoQuery CRUD Dev Workflow
-
-For Rapid Development simple [TypeScript Data Models](https://docs.servicestack.net/autoquery/okai-models) can be used to generate C# AutoQuery APIs and DB Migrations.
-
-### Cheat Sheet
-
-Create a new Table use `init <Table>`, e.g:
-
-```bash
-npx okai init Table
-```
-
-This will generate an empty `MyApp.ServiceModel/<Table>.d.ts` file along with stub AutoQuery APIs and DB Migration implementations. 
-
-#### Regenerate AutoQuery APIs and DB Migrations
-
-After modifying the TypeScript Data Model to include the desired fields, re-run the `okai` tool to re-generate the AutoQuery APIs and DB Migrations:
-
-```bash
-npx okai Table.d.ts
-```
-
-> Command can be run anywhere within your Solution
-
-After you're happy with your Data Model you can run DB Migrations to run the DB Migration and create your RDBMS Table:
-
-```bash
-npm run migrate
-```
-
-#### Making changes after first migration
-
-If you want to make further changes to your Data Model, you can re-run the `okai` tool to update the AutoQuery APIs and DB Migrations, then run the `rerun:last` npm script to drop and re-run the last migration:
-
-```bash
-npm run rerun:last
-```
-
-#### Removing a Data Model and all generated code
-
-If you changed your mind and want to get rid of the RDBMS Table you can revert the last migration:
-
-```bash
-npm run revert:last
-```
-
-Which will drop the table and then you can get rid of the AutoQuery APIs, DB Migrations and TypeScript Data model with:
-
-```bash
-npx okai rm Transaction.d.ts
-```
-
 ## Ideal Use Cases
 
 - SaaS applications requiring authentication
