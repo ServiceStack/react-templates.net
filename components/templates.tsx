@@ -1,3 +1,4 @@
+'use client';
 import { cn } from 'fumadocs-ui/utils/cn';
 import React, { useState, useMemo } from 'react';
 
@@ -91,8 +92,8 @@ export default function TemplateSelector({ templates, hide, className }: Templat
     templates.length === 1
       ? 'grid-cols-1'
       : templates.length === 2
-      ? 'grid-cols-2 max-w-md mx-auto'
-      : 'grid-cols-3';
+      ? 'grid-cols-1 sm:grid-cols-2 max-w-md mx-auto'
+      : 'grid-cols-1 sm:grid-cols-3';
 
   return (
     <div className={cn('not-prose', className)}>

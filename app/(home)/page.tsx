@@ -35,9 +35,9 @@ export default function HomePage() {
         {/* Spinning React Logo Watermark (Positioned absolutely to the right) */}
         <svg className="absolute -right-20 top-20 h-[600px] w-[600px] text-cyan-500/5 animate-[spin_60s_linear_infinite] pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.5">
           <circle cx="12" cy="12" r="2"></circle>
-          <ellipse rx="10" ry="4.5" transform="rotate(60 12 12)"></ellipse>
-          <ellipse rx="10" ry="4.5" transform="rotate(120 12 12)"></ellipse>
-          <ellipse rx="10" ry="4.5"></ellipse>
+          <ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(60 12 12)"></ellipse>
+          <ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(120 12 12)"></ellipse>
+          <ellipse cx="12" cy="12" rx="10" ry="4.5"></ellipse>
         </svg>
 
         {/* 2. Main Content Container */}
@@ -74,7 +74,7 @@ export default function HomePage() {
                 <svg className="w-5 h-5 ml-2 -mr-1 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
               </Link>
               <Link
-                href="/docs/templates"
+                href="/docs/templates/react-static"
                 className="inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white transition-all duration-200 bg-transparent border-2 border-slate-600 hover:border-cyan-400/50 rounded-full hover:bg-slate-800 hover:text-cyan-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-600 shadow-sm"
               >
                 Explore Templates
@@ -329,11 +329,11 @@ export default function HomePage() {
         <div className="absolute inset-0 opacity-20 pointer-events-none">
           <svg className="h-full w-full" aria-hidden="true">
             <defs>
-              <pattern id="featured-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <pattern id="gallery-grid" width="40" height="40" patternUnits="userSpaceOnUse">
                 <path d="M0 40L40 0H20L0 20M40 40V20L20 40" stroke="#0ea5e9" strokeWidth="1" fill="none" opacity="0.1" />
               </pattern>
             </defs>
-            <rect width="100%" height="100%" fill="url(#featured-grid)" />
+            <rect width="100%" height="100%" fill="url(#gallery-grid)" />
           </svg>
         </div>
 
