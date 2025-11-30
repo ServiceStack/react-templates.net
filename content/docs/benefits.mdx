@@ -178,13 +178,13 @@ No more guessing API shapes, no more runtime type errors, no more manual seriali
 
 # Maximum Connectivity with ServiceStack
 
-ServiceStack isn't just another .NET framework—it's a connectivity platform that speaks every language.
+ServiceStack isn't just another .NET framework, it's the connectivity platform that speaks every language!
 
 ## Native End-to-End Typed Support for 11 Languages
 
-[Add ServiceStack Reference](https://docs.servicestack.net/add-servicestack-reference) generates native typed DTOs for:
+ServiceStack's [Add ServiceStack Reference](https://docs.servicestack.net/add-servicestack-reference) gives your APIs instant typed DTOs for the most popular Web, Mobile and Desktop languages out-of-the-box:
 
-| Language   | Client Library | Generate DTO Command | 
+| Language   | Client Library | Generate DTOs Command | 
 |------------|----------------|----------------------|
 | TypeScript | [@servicestack/client](https://www.npmjs.com/package/@servicestack/client) | `npx get-dtos typescript` |
 | JavaScript | [@servicestack/client](https://www.npmjs.com/package/@servicestack/client) | `npx get-dtos mjs` |
@@ -198,7 +198,9 @@ ServiceStack isn't just another .NET framework—it's a connectivity platform th
 | F#         | [ServiceStack.Client](http://nuget.org/packages/ServiceStack.Client) | `npx get-dtos fsharp` |
 | VB.NET     | [ServiceStack.Client](http://nuget.org/packages/ServiceStack.Client) | `npx get-dtos vbnet` |
 
-One API definition, 11 typed clients - all generated automatically.
+One API definition, 11 typed clients - all generated automatically. 
+
+Unlike other platforms that generate typed integrations, ServiceStack's [message-based design](https://docs.servicestack.net/advantages-of-message-based-web-services) only requires generating your Server DTOs in each language — resulting in dramatically less generated code, simpler integrations, and a single reusable JsonServiceClient that works across all ServiceStack APIs.
 
 ## Every Data Format You Need
 
