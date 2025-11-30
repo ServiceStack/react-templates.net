@@ -60,7 +60,7 @@ export default function HomePage() {
             </h1>
 
             <p className="text-xl md:text-2xl text-slate-300 max-w-4xl mx-auto leading-relaxed font-medium">
-              Ultimate .NET React Templates for <span className="text-cyan-400 font-bold">Vibe Coded UIs</span>
+              Ultimate .NET 10 React Templates for <span className="text-cyan-400 font-bold">Vibe Coded UIs</span>
               <br className="hidden md:block" />
               running on <span className="text-sky-400 font-bold">robust and scalable .NET backends</span>.
             </p>
