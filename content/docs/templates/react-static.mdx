@@ -115,36 +115,42 @@ dotnet watch
 ## Project Structure
 
 ```
-├── MyApp/                      # .NET Backend
-│   ├── Configure.*.cs          # Modular AppHost configuration
-│   ├── Migrations/             # EF Core & OrmLite migrations
-│   ├── Program.cs              # Application entry point
-│   └── wwwroot/                # Static files (production build)
-│
-├── MyApp.Client/               # React Frontend
-│   ├── src/
-│   │   ├── components/         # React components
-│   │   ├── lib/
-│   │   │   ├── dtos.ts         # Auto-generated TypeScript DTOs
-│   │   │   ├── gateway.ts      # ServiceStack API client
-│   │   │   └── utils.ts        # Utility functions
-│   │   ├── styles/
-│   │   │   └── index.css       # Tailwind CSS styles
-│   │   ├── App.tsx             # Main App component
-│   │   └── main.tsx            # Application entry point
-│   ├── vite.config.ts          # Vite configuration
-│   └── package.json            # NPM dependencies
-│
-├── MyApp.ServiceInterface/     # Service implementations
-├── MyApp.ServiceModel/         # DTOs & API definitions
-├── MyApp.Tests/                # Integration & unit tests
-└── config/
-│   └── deploy.yml              # Kamal deployment configuration
-│──.github/                     # GitHub Actions workflows
+MyApp/                         # .NET Backend (hosts both .NET and Vite React)
+├── Configure.*.cs             # Modular startup configuration
+├── Migrations/                # EF Core Identity migrations + OrmLite app migrations
+├── Pages/                     # Identity Auth Razor Pages
+└── wwwroot/                   # Production static files (from MyApp.Client/dist)
+
+MyApp.Client/                  # React Frontend
+├── src/
+│   ├── lib/
+│   │   ├── dtos.ts            # Auto-generated from C# (via `npm run dtos`)
+│   │   ├── gateway.ts         # ServiceStack JsonServiceClient
+│   │   └── utils.ts           # Utility functions
+│   ├── components/            # React components
+│   └── styles/                # Tailwind CSS
+└── vite.config.ts             # Vite config for dev mode
+
+MyApp.ServiceModel/            # DTOs & API contracts
+├── *.cs                       # C# Request/Response DTOs
+├── api.d.ts                   # TypeScript data models Schema
+└── *.d.ts                     # TypeScript data models for okai code generation
+
+MyApp.ServiceInterface/        # Service implementations
+├── Data/                      # EF Core DbContext and Identity models
+└── *Services.cs               # ServiceStack service implementations
+
+MyApp.Tests/                   # .NET tests (NUnit)
+├── IntegrationTest.cs         # API integration tests
+└── MigrationTasks.cs          # Migration task runner
+
+config/
+└── deploy.yml                 # Kamal deployment settings
+.github/
 └── workflows/
-    ├── build.yml               # CI build and test
-    ├── build-container.yml     # Container image build
-    └── release.yml             # Production deployment with Kamal
+    ├── build.yml              # CI build and test
+    ├── build-container.yml    # Container image build
+    └── release.yml            # Production deployment with Kamal
 ```
 
 ## Development Workflow
