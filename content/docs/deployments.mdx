@@ -57,7 +57,7 @@ The only secret that needs to be configured per App is:
 gh secret set KAMAL_DEPLOY_HOST <www.example.org>
 ```
 
-You could register any App-specifc secrets here, althouth our preference is instead of polluting each 
+You could register any App-specifc secrets here, although our preference is instead of polluting each 
 GitHub Reposity with multiple App-specific GitHub Action Secrets, you can save all your secrets in a single 
 `APPSETTINGS_PATCH` GitHub Action Secret to patch `appsettings.json` with environment-specific configuration 
 using [JSON Patch](https://jsonpatch.com). E.g:
