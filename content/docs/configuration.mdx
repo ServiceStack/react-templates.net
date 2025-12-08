@@ -45,7 +45,7 @@ services.AddSingleton<IEmailSender<ApplicationUser>, EmailSender>();
 
 ### App Settings Secrets
 
-Instead of polluting each GitHub Reposity with multiple App-specific GitHub Action Secrets, you can save all your secrets in a single `APPSETTINGS_PATCH` GitHub Action Secret to patch `appsettings.json` with environment-specific configuration using [JSON Patch](https://jsonpatch.com). E.g:
+Instead of polluting each GitHub Repository with multiple App-specific GitHub Action Secrets, you can save all your secrets in a single `APPSETTINGS_PATCH` GitHub Action Secret to patch `appsettings.json` with environment-specific configuration using [JSON Patch](https://jsonpatch.com). E.g:
 
 ```json
 [
@@ -55,8 +55,8 @@ Instead of polluting each GitHub Reposity with multiple App-specific GitHub Acti
         "value":"Server=service-postgres;Port=5432;User Id=dbuser;Password=dbpass;Database=dbname;Pooling=true;"
     },
     { "op":"add", "path":"/SmtpConfig", "value":{
-        "UserName": "SmptUser",
-        "Password": "SmptPass",
+        "UserName": "SmtpUser",
+        "Password": "SmtpPass",
         "Host": "email-smtp.us-east-1.amazonaws.com",
         "Port": 587,
         "From": "noreply@example.org",
@@ -95,8 +95,8 @@ npx add-in db-identity
 
 ### App Settings Secrets
 
-You could register any App-specifc secrets here, although our preference is instead of polluting each 
-GitHub Reposity with multiple App-specific GitHub Action Secrets, you can save all your secrets in a single 
+You could register any App-specific secrets here, although our preference is instead of polluting each 
+GitHub Repository with multiple App-specific GitHub Action Secrets, you can save all your secrets in a single 
 `APPSETTINGS_PATCH` GitHub Action Secret to patch `appsettings.json` with environment-specific configuration 
 using [JSON Patch](https://jsonpatch.com). E.g:
 
@@ -115,8 +115,8 @@ JSON Patch example:
         "value":"Server=service-postgres;Port=5432;User Id=dbuser;Password=dbpass;Database=dbname"
     },
     { "op":"add", "path":"/SmtpConfig", "value":{
-        "UserName": "SmptUser",
-        "Password": "SmptPass",
+        "UserName": "SmtpUser",
+        "Password": "SmtpPass",
         "Host": "email-smtp.us-east-1.amazonaws.com",
         "Port": 587,
         "From": "noreply@example.org",

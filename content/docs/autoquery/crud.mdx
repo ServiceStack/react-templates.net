@@ -120,14 +120,14 @@ public class DeleteRockstar : IDeleteDb<Rockstar>, IReturnVoid
 }
 ```
 
-and to Query the Rockstar table you have the [full featureset of AutoQuery](/docs/autoquery) for a complete set 
+and to Query the Rockstar table you have the [full feature-set of AutoQuery](/docs/autoquery) for a complete set 
 of CRUD Services without needing to provide any implementations.
 
 ## Custom AutoQuery CRUD Implementation
 
 Just as you can create [Custom AutoQuery Implementations](/docs/autoquery#custom-autoquery-implementations) 
 to override the default AutoQuery behavior you can also override AutoQuery CRUD implementations by creating 
-implementations with AutoQuery CRUD Request DTOs and calling the relevate `IAutoQueryDb` method, e.g:
+implementations with AutoQuery CRUD Request DTOs and calling the relevant `IAutoQueryDb` method, e.g:
 
 ```csharp
 public class MyCrudServices(IAutoQueryDb autoQuery) : Service
@@ -324,7 +324,7 @@ public class MyScripts : ScriptMethods
 
 // Populate Post.TenantId property with `tenantId` #Script Method
 [AutoPopulate(nameof(Post.TenantId), Eval = "tenantId")]
-public class CreatePost : ICreatDb<Post>, IReturn<IdResponse> 
+public class CreatePost : ICreateDb<Post>, IReturn<IdResponse> 
 {
     public string Name { get; set; }
     public string Content { get; set; }

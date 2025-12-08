@@ -37,7 +37,7 @@ To switch from SQLite to PostgreSQL/SQL Server/MySQL:
 npx add-in ef-postgres
 ```
 
-2. Optionally install `db-identity` to use this RBMDS in background jobs and Request Logs:
+2. Optionally install `db-identity` to use this RDBMS in background jobs and Request Logs:
 
 ```bash
 npx add-in db-identity
@@ -102,9 +102,9 @@ Which just like other Request DTO's in ServiceStack falls back to using ServiceS
 
 This is possible as a hidden gem in AutoQuery's approach is that everything still works whether using explicit or no properties (implicit). This is possible as the JsonServiceClient generates the same HTTP Request that matches the implicit conventions whether the property exist on the Server Request DTO or not.
 
-#### Explcit Request DTO Properties Recommended
+#### Explicit Request DTO Properties Recommended
 
-In order for ServiceStack to generate typed Properties for your AutoQuery API in its [TypeScript DTOs](https://docs.servicestack.net/typescript-add-servicestack-reference) they would need to defined explitly on your Request DTO, this also gives AI Models necessary context for determining what properties are available for each .NET API.
+In order for ServiceStack to generate typed Properties for your AutoQuery API in its [TypeScript DTOs](https://docs.servicestack.net/typescript-add-servicestack-reference) they would need to defined explicitly on your Request DTO, this also gives AI Models necessary context for determining what properties are available for each .NET API.
 
 ## Implicit Conventions
 
@@ -730,7 +730,7 @@ that you can add when specifying custom fields is `ExcludeDefaultValues`, e.g:
 ```
 
 Using TypeScript `JsonServiceClient` you can include additional queryString parameters that are not defined 
-on Request DTOs using the 2nd `args` paramater. e.g:
+on Request DTOs using the 2nd `args` parameter. e.g:
 
 ```ts
 const api = await client.api(request, { jsconfig: 'ExcludeDefaultValues' })
