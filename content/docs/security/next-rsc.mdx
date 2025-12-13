@@ -8,7 +8,7 @@ The [Next.js RSC](/docs/templates/next-rsc) template leverages Next.js React Ser
 
 Unlike traditional fullstack Next.js apps that use Server Functions (`'use server'`) to directly handle data operations, this template routes all data access through type-safe **ServiceStack .NET APIs**. Next.js serves exclusively as the presentation layer, never touching databases, secrets, or business logic directly.
 
-This architectural decision makes the template **immune to React Server Components vulnerabilities**. Since it doesn't use the vulnerable Server Functions feature, the primary attack vector simply doesn't exist. Combined with process-level isolation between the Node.js and .NET layers, even future vulnerabilities in Next.js cannot compromise your application's data or infrastructure.
+This architectural decision makes the template **immune to React Server Components vulnerabilities**. Since it doesn't use the vulnerable Server Functions feature, the primary attack vector doesn't exist. Combined with process-level isolation between the Node.js and .NET layers, even future vulnerabilities in Next.js cannot compromise your application's data or infrastructure.
 
 ## Security by Design
 
