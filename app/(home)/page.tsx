@@ -193,6 +193,7 @@ export default function HomePage() {
               screenshot="https://github.com/ServiceStack/docs.servicestack.net/blob/main/MyApp/wwwroot/img/pages/react/next-rsc.webp?raw=true"
               diagram="https://github.com/ServiceStack/docs.servicestack.net/blob/main/MyApp/wwwroot/img/pages/react/info/next-rsc-prod.svg?raw=true"
               features={[
+                "Secure by Design",
                 "Server Components",
                 "Hybrid Rendering",
                 "Unified Proxy Architecture"

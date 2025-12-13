@@ -56,6 +56,19 @@ This template uses a consistent architecture across all environments where the .
 - ASP.NET Core proxies requests to Next.js production server (running on port 3000)
 - Static file responses cached in `NodeProxy` in-memory managed cache for optimal performance
 
+## Security
+
+This template is **immune to React Server Components vulnerabilities** through a defense-in-depth approach:
+
+- **No Server Functions**: The template doesn't use React Server Functions (`'use server'`), eliminating the primary attack vector for [Critical Vulnerabilities in React Server Components](/docs/security/next-rsc#critical-vulnerabilities-in-react-server-components)
+- **Process Isolation**: Node.js runs as an unprivileged user with no access to .NET config, credentials or secrets
+- **Environment Separation**: Sensitive environment variables never reach the Node.js process
+- **File System Permissions**: .NET application files are protected with root-only permissions
+
+Even if a new vulnerability is discovered in React Server Components, the infrastructure limits the blast radius. An attacker with code execution in Node.js cannot access database credentials, API keys, or modify .NET code.
+
+See [Security Architecture Documentation](/docs/security/next-rsc) for detailed analysis, implementation and automated testing details.
+
 ## Core Technologies
 
 ### Frontend (Next.js 16 + React 19)
