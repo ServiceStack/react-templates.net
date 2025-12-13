@@ -45,29 +45,39 @@ services.AddSingleton<IEmailSender<ApplicationUser>, EmailSender>();
 
 ### App Settings Secrets
 
-Instead of polluting each GitHub Repository with multiple App-specific GitHub Action Secrets, you can save all your secrets in a single `APPSETTINGS_PATCH` GitHub Action Secret to patch `appsettings.json` with environment-specific configuration using [JSON Patch](https://jsonpatch.com). E.g:
+Instead of polluting each GitHub Repository with multiple App-specific GitHub Action Secrets, you can save all your secrets in a single `APPSETTINGS_JSON` GitHub Action Secret which will get written inside the Docker container `appsettings.Production.json`, e.g:
 
 ```json
-[
-    {
-        "op":"replace",
-        "path":"/ConnectionStrings/DefaultConnection",
-        "value":"Server=service-postgres;Port=5432;User Id=dbuser;Password=dbpass;Database=dbname;Pooling=true;"
-    },
-    { "op":"add", "path":"/SmtpConfig", "value":{
-        "UserName": "SmtpUser",
-        "Password": "SmtpPass",
-        "Host": "email-smtp.us-east-1.amazonaws.com",
-        "Port": 587,
-        "From": "noreply@example.org",
-        "FromName": "MyApp",
-        "Bcc": "copy@example.org"
-      } 
-    },
-    { "op":"add", "path":"/Admins", "value": ["admin1@email.com","admin2@email.com"] },
-    { "op":"add", "path":"/CorsFeature/allowOriginWhitelist/-", "value":"https://servicestack.net" }
-]
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=service-postgres;Port=5432;User Id=dbuser;Password=dbpass;Database=dbname;Pooling=true;"
+  },
+  "SmtpConfig": {
+      "UserName": "SmtpUser",
+      "Password": "SmtpPass",
+      "Host": "email-smtp.us-east-1.amazonaws.com",
+      "Port": 587,
+      "From": "noreply@example.org",
+      "FromName": "MyApp",
+      "Bcc": "copy@example.org"
+    } 
+  },
+  "Admins": ["admin1@email.com","admin2@email.com"]
+}
 ```
+
+After changing `appsettings.Production.json` update your `APPSETTINGS_JSON` GitHub Action Secret with:
+
+```bash
+npm run secret:prod
+```
+
+This uses the GitHub CLI to add your `appsettings.Production.json` to your GitHub repository's Action secrets:
+
+```bash
+gh secret set APPSETTINGS_JSON < appsettings.Production.json
+```
+
 
 ### SMTP Email
 
@@ -95,38 +105,37 @@ npx add-in db-identity
 
 ### App Settings Secrets
 
-You could register any App-specific secrets here, although our preference is instead of polluting each 
-GitHub Repository with multiple App-specific GitHub Action Secrets, you can save all your secrets in a single 
-`APPSETTINGS_PATCH` GitHub Action Secret to patch `appsettings.json` with environment-specific configuration 
-using [JSON Patch](https://jsonpatch.com). E.g:
-
-```bash
-# JSON Patch to apply to appsettings.json:
-gh secret set APPSETTINGS_PATCH [json-patch]
-```
-
-JSON Patch example:
+You could register any App-specific secrets here, although our preference is to instead save all your secrets in a single `APPSETTINGS_JSON` GitHub Action Secret which will get written inside the Docker container `appsettings.Production.json`, e.g:
 
 ```json
-[
-    {
-        "op":"replace",
-        "path":"/ConnectionStrings/DefaultConnection",
-        "value":"Server=service-postgres;Port=5432;User Id=dbuser;Password=dbpass;Database=dbname"
-    },
-    { "op":"add", "path":"/SmtpConfig", "value":{
-        "UserName": "SmtpUser",
-        "Password": "SmtpPass",
-        "Host": "email-smtp.us-east-1.amazonaws.com",
-        "Port": 587,
-        "From": "noreply@example.org",
-        "FromName": "MyApp",
-        "Bcc": "copy@example.org"
-      } 
-    },
-    { "op":"add", "path":"/Admins", "value": ["admin1@email.com","admin2@email.com"] },
-    { "op":"add", "path":"/CorsFeature/allowOriginWhitelist/-", "value":"https://servicestack.net" }
-]
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=service-postgres;Port=5432;User Id=dbuser;Password=dbpass;Database=dbname;Pooling=true;"
+  },
+  "SmtpConfig": {
+      "UserName": "SmtpUser",
+      "Password": "SmtpPass",
+      "Host": "email-smtp.us-east-1.amazonaws.com",
+      "Port": 587,
+      "From": "noreply@example.org",
+      "FromName": "MyApp",
+      "Bcc": "copy@example.org"
+    } 
+  },
+  "Admins": ["admin1@email.com","admin2@email.com"]
+}
+```
+
+After changing `appsettings.Production.json` update your `APPSETTINGS_JSON` GitHub Action Secret with:
+
+```bash
+npm run secret:prod
+```
+
+This uses the GitHub CLI to add your `appsettings.Production.json` to your GitHub repository's Action secrets:
+
+```bash
+gh secret set APPSETTINGS_JSON < appsettings.Production.json
 ```
 
 ### Kamal Accessories
