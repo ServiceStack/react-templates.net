@@ -69,7 +69,7 @@ export async function createBooking(data: Booking) {
 import { client } from '@/lib/gateway'
 import { CreateBooking } from '@/lib/dtos'
 
-export async function createBooking(data: BookingData) {
+export async function createBooking(data: Booking) {
   // Type-safe API call to .NET backend
   return await client.api(new CreateBooking(data))
 }
