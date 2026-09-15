@@ -1,0 +1,35 @@
+---
+title: "Security"
+description: "Security in Next SaaS is layered across ASP.NET Core Identity, ServiceStack request validation, organization context, role/capability policy, entitlements, quotas, audit, and deployment checks."
+---
+
+## Guides
+
+| Area | Guide |
+| --- | --- |
+| Login, confirmation, 2FA, invitations, and account lifecycle | [Authentication and accounts](/docs/next-saas/security/authentication-and-accounts) |
+| Organization and platform permissions | [Authorization and roles](/docs/next-saas/security/authorization-and-roles) |
+| Preventing cross-customer access | [Tenant isolation](/docs/next-saas/security/tenant-isolation) |
+| API keys, scopes, quotas, and rate limiting | [API credentials and abuse controls](/docs/next-saas/security/api-credentials-and-abuse-controls) |
+| Signed provider events and safe replay | [Stripe webhook security](/docs/next-saas/security/stripe-webhook-security) |
+| Time-limited operator access | [Support access](/docs/next-saas/security/support-access) |
+| Protected keys, logs, audit, export, and deletion | [Data protection and privacy](/docs/next-saas/security/data-protection-and-privacy) |
+| Browser, request, upload, and response boundaries | [Web and input security](/docs/next-saas/security/web-and-input-security) |
+| Final threat-led release review | [Production security review](/docs/next-saas/security/production-security-review) |
+
+## Security invariants
+
+- The browser is never an authorization boundary.
+- Every customer-owned lookup is constrained by resolved organization context.
+- Organization roles and platform roles are separate.
+- Stripe and SMTP secrets never enter the frontend bundle.
+- Published plan state and local subscription projections drive access without live provider calls.
+- Raw credentials and customer content do not belong in logs or audit metadata.
+- Retried external and background work preserves its original idempotency boundary.
+- Production readiness checks are a baseline, not a complete security assessment.
+
+Perform a product-specific threat model before launch. Authentication methods, data sensitivity, compliance obligations, integrations, and hosting architecture can materially change the required controls.
+
+![Support Access Four-Stage Lifecycle](/img/next-saas/support-access-lifecycle.png)
+
+![Role and Authorization Boundaries](/img/next-saas/role-boundaries.png)

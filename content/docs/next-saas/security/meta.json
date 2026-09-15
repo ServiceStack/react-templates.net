@@ -1,0 +1,16 @@
+{
+    "title": "Security",
+    "icon": "Shield",
+    "pages": [
+        "index",
+        "authentication-and-accounts",
+        "authorization-and-roles",
+        "tenant-isolation",
+        "api-credentials-and-abuse-controls",
+        "stripe-webhook-security",
+        "support-access",
+        "data-protection-and-privacy",
+        "web-and-input-security",
+        "production-security-review"
+    ]
+}

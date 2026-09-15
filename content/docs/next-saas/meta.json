@@ -1,0 +1,17 @@
+{
+    "title": "Next SaaS",
+    "description": "Multi-tenant B2B SaaS Template",
+    "root": true,
+    "icon": "Building2",
+    "pages": [
+        "index",
+        "---Start Here---",
+        "getting-started",
+        "---Reference---",
+        "concepts",
+        "features",
+        "development",
+        "operations",
+        "security"
+    ]
+}

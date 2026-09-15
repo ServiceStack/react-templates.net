@@ -1,0 +1,79 @@
+---
+title: "Next SaaS Template"
+description: "Next SaaS is a .NET 10, ServiceStack, ASP.NET Core Identity, React 19, and Next.js 16 template for multi-tenant B2B SaaS products. Acme, the included document-storage product, is intentionally small: it demonstrates subscriptions, quotas, storage, analytics, teams, and operations without imposing a product domain."
+---
+
+![Next SaaS Operations Center](/img/next-saas/operations-center.png)
+
+## Start here
+
+New developers should follow the onboarding path in order. It takes the application from a clean checkout to a verified product change and optional Stripe sandbox subscription.
+
+1. [Understand the template](/docs/next-saas/getting-started/overview)
+2. [Run it locally](/docs/next-saas/getting-started/local-setup)
+3. [Tour the project](/docs/next-saas/getting-started/project-tour)
+4. [Customize the product](/docs/next-saas/getting-started/customize-the-product)
+5. [Add a metered feature](/docs/next-saas/getting-started/add-a-metered-feature)
+6. [Connect Stripe sandbox](/docs/next-saas/getting-started/connect-stripe-sandbox)
+7. [Verify and ship](/docs/next-saas/getting-started/verify-and-ship)
+
+## Reference documentation
+
+![One-Runtime Production Architecture](/img/next-saas/production-architecture.png)
+
+The remaining documentation is organized by task and can be read independently:
+
+- **Concepts** — [architecture](/docs/next-saas/concepts/architecture), [organizations and tenancy](/docs/next-saas/concepts/organizations-and-tenancy), [plans and entitlements](/docs/next-saas/concepts/plans-and-entitlements), [usage and quotas](/docs/next-saas/concepts/usage-and-quotas), and [background processing](/docs/next-saas/concepts/background-processing).
+- **Features** — [billing and subscriptions](/docs/next-saas/features/billing-and-subscriptions), [plans, pricing, and trials](/docs/next-saas/features/plans-pricing-trials), [coupons](/docs/next-saas/features/coupons), [organizations and members](/docs/next-saas/features/organizations-and-members), [API keys](/docs/next-saas/features/api-keys), [file storage](/docs/next-saas/features/file-storage), [usage analytics](/docs/next-saas/features/usage-analytics), [notifications](/docs/next-saas/features/notifications), [audit logs](/docs/next-saas/features/audit-logs), [data lifecycle](/docs/next-saas/features/data-lifecycle), and the [Operations Center and support workflows](/docs/next-saas/features/support-operations).
+- **Development** — [recipe index](/docs/next-saas/development), [ServiceStack APIs](/docs/next-saas/development/add-a-servicestack-api), [feature gates](/docs/next-saas/development/add-a-feature-gate), [meters and quotas](/docs/next-saas/development/add-a-meter-and-quota), [background jobs](/docs/next-saas/development/add-a-background-job), [database migrations](/docs/next-saas/development/database-migrations), [frontend pages](/docs/next-saas/development/add-a-frontend-page), [typed DTO generation](/docs/next-saas/development/generate-typed-dtos), [testing](/docs/next-saas/development/testing), and [AI-assisted development](/docs/next-saas/development/ai-assisted-development).
+- **Operations** — [runbook index](/docs/next-saas/operations), [configuration](/docs/next-saas/operations/configuration), [secrets](/docs/next-saas/operations/secrets), [deployment](/docs/next-saas/operations/deployment), [database and storage](/docs/next-saas/operations/database-and-storage), [observability and health](/docs/next-saas/operations/observability-and-health), [background jobs and recovery](/docs/next-saas/operations/background-jobs-and-recovery), [external services](/docs/next-saas/operations/external-services), [retention and lifecycle](/docs/next-saas/operations/retention-and-lifecycle), [backup and restore](/docs/next-saas/operations/backup-and-restore), and [troubleshooting](/docs/next-saas/operations/troubleshooting).
+- **Security** — [security index](/docs/next-saas/security), [authentication and accounts](/docs/next-saas/security/authentication-and-accounts), [authorization and roles](/docs/next-saas/security/authorization-and-roles), [tenant isolation](/docs/next-saas/security/tenant-isolation), [API credentials and abuse controls](/docs/next-saas/security/api-credentials-and-abuse-controls), [Stripe webhook security](/docs/next-saas/security/stripe-webhook-security), [support access](/docs/next-saas/security/support-access), [data protection and privacy](/docs/next-saas/security/data-protection-and-privacy), [web and input security](/docs/next-saas/security/web-and-input-security), and the [production security review](/docs/next-saas/security/production-security-review).
+
+The planned onboarding, concept, feature, development, operations, and security documentation sets are now present. Existing root-level documents remain available as compatibility entry points where material has moved into this structure.
+
+## Documentation conventions
+
+- Paths are relative to the repository root unless stated otherwise.
+- `Workspace` is the internal code and database term; the product UI calls it an **Organization**.
+- C# request and response types in `MyApp.ServiceModel` are authoritative. `MyApp.Client/lib/dtos.ts` is generated.
+- Configuration keys use JSON notation in prose, such as `Saas.EnableTrials`, and double underscores in environment variables, such as `Saas__EnableTrials`.
+- Commands assume a Bash-compatible shell on Linux or macOS. Equivalent PowerShell commands can be used on Windows.
+
+## Quick command index
+
+```bash
+# Run locally
+cd MyApp
+dotnet watch
+
+# Diagnose local configuration
+./scripts/doctor.sh
+
+# Recreate development state
+ASPNETCORE_ENVIRONMENT=Development ./scripts/reset-dev.sh --yes
+
+# Run every validation gate
+./scripts/verify.sh
+
+# Check production configuration and run verification
+./scripts/preflight.sh
+```
+
+Useful application surfaces:
+
+| URL | Purpose |
+| --- | --- |
+| `/` | Public product site |
+| `/dashboard` | Customer organization overview |
+| `/admin` | Operations Center overview and side navigation |
+| `/admin/customers` | Customer 360 and customer exceptions |
+| `/admin/plans` | Plans and Coupons tabs for catalog and discount management |
+| `/admin/usage` | Platform usage analytics and quota pressure |
+| `/admin/operations` | Failed work queues and integration readiness |
+| `/admin/security` | Retention, support access, and platform audit |
+| `/admin/settings` | Platform configuration ownership |
+| `/admin-ui` | ServiceStack administration |
+| `/scalar/v1` | OpenAPI reference |
+| `/ui` | ServiceStack API Explorer |
+| `/up` | Process liveness |
+| `/ready` | Database and file-store readiness |

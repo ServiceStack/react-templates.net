@@ -1,0 +1,18 @@
+{
+    "title": "Features",
+    "icon": "Boxes",
+    "pages": [
+        "billing-and-subscriptions",
+        "plans-pricing-trials",
+        "coupons",
+        "organizations-and-members",
+        "api-keys",
+        "file-storage",
+        "usage-analytics",
+        "notifications",
+        "audit-logs",
+        "data-lifecycle",
+        "support-operations"
+    ],
+    "defaultOpen": true
+}

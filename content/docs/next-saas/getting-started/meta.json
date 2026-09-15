@@ -1,0 +1,14 @@
+{
+    "title": "Getting Started",
+    "icon": "Rocket",
+    "pages": [
+        "overview",
+        "local-setup",
+        "project-tour",
+        "customize-the-product",
+        "add-a-metered-feature",
+        "connect-stripe-sandbox",
+        "verify-and-ship"
+    ],
+    "defaultOpen": true
+}

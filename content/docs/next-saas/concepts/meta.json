@@ -1,0 +1,12 @@
+{
+    "title": "Concepts",
+    "icon": "Lightbulb",
+    "pages": [
+        "architecture",
+        "organizations-and-tenancy",
+        "plans-and-entitlements",
+        "usage-and-quotas",
+        "background-processing"
+    ],
+    "defaultOpen": true
+}

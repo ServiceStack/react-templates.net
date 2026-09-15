@@ -1,0 +1,17 @@
+{
+    "title": "Operations",
+    "icon": "Server",
+    "pages": [
+        "index",
+        "configuration",
+        "secrets",
+        "deployment",
+        "database-and-storage",
+        "observability-and-health",
+        "background-jobs-and-recovery",
+        "external-services",
+        "retention-and-lifecycle",
+        "backup-and-restore",
+        "troubleshooting"
+    ]
+}

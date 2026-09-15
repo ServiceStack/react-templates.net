@@ -1,0 +1,16 @@
+{
+    "title": "Development",
+    "icon": "Code",
+    "pages": [
+        "index",
+        "add-a-servicestack-api",
+        "add-a-feature-gate",
+        "add-a-meter-and-quota",
+        "add-a-background-job",
+        "database-migrations",
+        "add-a-frontend-page",
+        "generate-typed-dtos",
+        "testing",
+        "ai-assisted-development"
+    ]
+}

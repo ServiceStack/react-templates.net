@@ -133,6 +133,8 @@ export default function HomePage() {
 
       </section>
 
+      <NextSaasShowcase />
+
       {/* Body Content - Light/Default Theme */}
       <div className="flex-1 w-full bg-background text-foreground">
         <div className="max-w-6xl mx-auto px-4 py-24 space-y-24">
@@ -371,6 +373,109 @@ export default function HomePage() {
       </div>
 
     </main>
+  );
+}
+
+function NextSaasShowcase() {
+  const pillars = [
+    { title: "Organizations & Teams", desc: "Multi-tenant organizations with Owner, Admin, Billing & Member roles and strict tenant isolation.", href: "/docs/next-saas/concepts/organizations-and-tenancy" },
+    { title: "Stripe Billing", desc: "Checkout, Customer Portal, trials, coupons & signed webhooks with local subscription projections.", href: "/docs/next-saas/features/billing-and-subscriptions" },
+    { title: "Plans & Entitlements", desc: "Immutable plan versions with monthly & annual prices, feature gates and customer overrides.", href: "/docs/next-saas/concepts/plans-and-entitlements" },
+    { title: "Usage & Quotas", desc: "Idempotent usage events, quota reservations, counters, gauges and usage analytics.", href: "/docs/next-saas/concepts/usage-and-quotas" },
+    { title: "Operations Center", desc: "Customer 360, failed work queues, time-boxed support access, audit logs & data lifecycle.", href: "/docs/next-saas/features/support-operations" },
+    { title: "Production Ready", desc: "Startup validation, health checks, request correlation, security review & deployment preflight.", href: "/docs/next-saas/getting-started/verify-and-ship" },
+  ];
+
+  return (
+    <section className="relative w-full bg-slate-900 border-b border-white/10 overflow-hidden">
+      <div className="absolute top-0 right-1/4 h-96 w-96 rounded-full bg-blue-600/20 blur-[100px] pointer-events-none"></div>
+      <div className="absolute bottom-0 left-1/4 h-96 w-96 rounded-full bg-cyan-500/10 blur-[100px] pointer-events-none"></div>
+
+      <div className="relative z-10 max-w-6xl mx-auto px-4 py-20 md:py-24">
+        <div className="text-center space-y-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-sm font-medium text-cyan-300">
+            <span className="rounded-full bg-cyan-400 px-2 py-0.5 text-xs font-bold text-slate-900">NEW</span>
+            Production SaaS Template
+          </div>
+
+          <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight">
+            Next <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-sky-500 to-blue-600">SaaS</span>
+          </h2>
+
+          <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
+            Launch your <strong className="text-white">multi-tenant B2B SaaS</strong> on .NET 10, ServiceStack, ASP.NET Core Identity
+            and Next.js 16. Teams, Stripe subscriptions, plans, quotas and an Operations Center are built in, so you can focus on
+            your product instead of rebuilding SaaS infrastructure.
+          </p>
+        </div>
+
+        <div className="mt-14 grid lg:grid-cols-5 gap-10 items-center">
+          <div className="lg:col-span-3 space-y-4">
+            <Link href="/docs/next-saas" className="group block relative rounded-2xl overflow-hidden shadow-2xl border border-white/10 hover:border-cyan-400/50 transition-colors duration-300">
+              <Image
+                src="/img/next-saas/operations-center.png"
+                alt="Next SaaS Operations Center"
+                width={1920}
+                height={1080}
+                className="w-full h-auto transform group-hover:scale-[1.01] transition-transform duration-700"
+              />
+            </Link>
+          </div>
+
+          <div className="lg:col-span-2 space-y-6">
+            <CopyBlock className="w-full">
+              npx create-net next-saas ProjectName
+            </CopyBlock>
+
+            <ul className="space-y-3">
+              {[
+                "Guided 7-step onboarding",
+                "One-runtime production deployment",
+                "Typed APIs end-to-end from C# to TypeScript",
+                "55 guides across features, operations & security",
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-3 text-base text-slate-300">
+                  <svg className="w-5 h-5 flex-shrink-0 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                  {item}
+                </li>
+              ))}
+            </ul>
+
+            <div className="flex flex-wrap gap-4 pt-2">
+              <Link
+                href="/docs/next-saas/getting-started/overview"
+                className="inline-flex items-center justify-center px-6 py-3 font-bold text-slate-900 transition-all duration-200 bg-cyan-400 rounded-full hover:bg-cyan-300 hover:shadow-[0_0_20px_rgba(34,211,238,0.6)]"
+              >
+                Get Started
+              </Link>
+              <Link
+                href="/docs/next-saas"
+                className="inline-flex items-center justify-center px-6 py-3 font-bold text-white transition-all duration-200 border-2 border-slate-600 rounded-full hover:border-cyan-400/50 hover:bg-slate-800 hover:text-cyan-300"
+              >
+                Read the Docs
+              </Link>
+              <a
+                href="https://github.com/NetCoreTemplates/next-saas"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center px-4 py-3 font-medium text-slate-300 hover:text-white"
+              >
+                GitHub →
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {pillars.map((p) => (
+            <Link key={p.title} href={p.href} className="group block rounded-xl border border-white/10 bg-white/[0.03] p-6 hover:border-cyan-400/40 hover:bg-white/[0.06] transition-colors">
+              <h3 className="text-lg font-semibold text-white group-hover:text-cyan-300 transition-colors">{p.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-400">{p.desc}</p>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 

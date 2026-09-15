@@ -1,0 +1,37 @@
+---
+title: "Operations"
+description: "These guides cover the path from validated configuration to a recoverable, observable production deployment."
+---
+
+![Next SaaS Operations Center](/img/next-saas/operations-center.png)
+
+## Runbooks
+
+| Need | Guide |
+| --- | --- |
+| Understand settings and ownership | [Configuration](/docs/next-saas/operations/configuration) |
+| Store and rotate sensitive values | [Secrets](/docs/next-saas/operations/secrets) |
+| Build, migrate, and release | [Deployment](/docs/next-saas/operations/deployment) |
+| Operate PostgreSQL and file storage | [Database and storage](/docs/next-saas/operations/database-and-storage) |
+| Configure probes, logs, metrics, and alerts | [Observability and health](/docs/next-saas/operations/observability-and-health) |
+| Inspect and recover asynchronous work | [Background jobs and recovery](/docs/next-saas/operations/background-jobs-and-recovery) |
+| Operate Stripe and SMTP dependencies | [External services](/docs/next-saas/operations/external-services) |
+| Enforce cleanup and legal holds | [Retention and lifecycle](/docs/next-saas/operations/retention-and-lifecycle) |
+| Prepare for and execute recovery | [Backup and restore](/docs/next-saas/operations/backup-and-restore) |
+| Diagnose common failures | [Troubleshooting](/docs/next-saas/operations/troubleshooting) |
+
+## Production release checklist
+
+1. provision PostgreSQL, durable file/object storage, SMTP, Stripe, DNS, and TLS;
+2. store production secrets outside the repository;
+3. export the production configuration and run `./scripts/preflight.sh`;
+4. back up current durable state and verify restore readiness;
+5. run compatible database migrations as a deliberate release step;
+6. deploy the immutable application image;
+7. wait for `/ready` before admitting traffic;
+8. verify Stripe webhooks, email delivery, jobs, and customer/API-key flows;
+9. monitor errors, queue failures, quota rejection, and billing reconciliation.
+
+The included Kamal/GitHub workflow is a starting point. Adapt migration ordering, storage, backup, secret management, and observability to the target platform before accepting production data.
+
+![Operations Center Side Navigation](/img/next-saas/operator-navigation.png)
