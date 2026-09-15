@@ -75,59 +75,66 @@ export function NextSaasGallery() {
     if (el && strip) strip.scrollTo({ left: el.offsetLeft - strip.clientWidth / 2 + el.clientWidth / 2, behavior: 'smooth' });
   }, [index]);
 
-  const arrow = 'absolute top-1/2 -translate-y-1/2 z-10 rounded-full bg-slate-950/70 p-2.5 text-white/80 opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-slate-950 hover:text-white transition-opacity border border-white/10';
+  const arrow = 'absolute top-1/2 -translate-y-1/2 z-10 rounded-full border border-slate-200 bg-white/95 p-2.5 text-slate-700 shadow-lg opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-sky-600 hover:border-sky-300 transition-opacity';
 
   return (
-    <section className="relative w-full bg-slate-900 border-b border-white/10 overflow-hidden">
-      <div className="absolute top-0 right-1/4 h-96 w-96 rounded-full bg-blue-600/20 blur-[100px] pointer-events-none"></div>
-      <div className="absolute bottom-0 left-1/4 h-96 w-96 rounded-full bg-cyan-500/10 blur-[100px] pointer-events-none"></div>
+    <section className="relative w-full overflow-hidden border-b border-slate-200 bg-gradient-to-b from-sky-50 via-white to-white">
+      {/* Grid Pattern */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-60 [mask-image:linear-gradient(to_bottom,black,transparent_70%)]"
+        style={{ backgroundImage: 'linear-gradient(to right, rgb(148 163 184 / 0.18) 1px, transparent 1px), linear-gradient(to bottom, rgb(148 163 184 / 0.18) 1px, transparent 1px)', backgroundSize: '40px 40px' }}
+      />
+      <div className="absolute -top-24 left-1/2 -translate-x-1/2 h-96 w-[48rem] max-w-full rounded-full bg-sky-200/50 blur-[100px] pointer-events-none"></div>
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 py-20 md:py-24">
         {/* Heading */}
         <div className="text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-sm font-medium text-cyan-300">
-            <span className="rounded-full bg-cyan-400 px-2 py-0.5 text-xs font-bold text-slate-900">NEW</span>
+          <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white px-1.5 py-1 pr-4 text-sm font-medium text-sky-700 shadow-sm">
+            <span className="rounded-full bg-sky-600 px-2 py-0.5 text-xs font-bold text-white">NEW</span>
             Production SaaS Template
           </div>
-          <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight">
-            Next <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-sky-500 to-blue-600">SaaS</span>
+          <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-slate-900">
+            Next <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600">SaaS</span>
           </h2>
-          <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
-            Launch your <strong className="text-white">multi-tenant B2B SaaS</strong> on .NET 10, ServiceStack and Next.js 16.
+          <p className="text-lg md:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+            Launch your <strong className="text-slate-900">multi-tenant B2B SaaS</strong> on .NET 10, ServiceStack and Next.js 16.
             Teams, Stripe subscriptions, plans, quotas and an Operations Center are built in. Take the tour:
           </p>
         </div>
 
         {/* Group tabs */}
         <div className="mt-12 flex justify-center">
-          <div role="tablist" className="inline-flex flex-wrap justify-center gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1">
+          <div role="tablist" className="inline-flex flex-wrap justify-center gap-1 rounded-full border border-slate-200 bg-white p-1 shadow-sm">
             {groups.map((g, i) => (
               <button
                 key={g.name}
                 role="tab"
                 aria-selected={i === groupIndex}
                 onClick={() => setIndex(allShots.indexOf(g.shots[0]))}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${i === groupIndex ? 'bg-cyan-400 text-slate-900' : 'text-slate-300 hover:text-white hover:bg-white/10'}`}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${i === groupIndex
+                  ? 'bg-sky-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
               >
                 {g.name}
-                <span className={`ml-2 text-xs ${i === groupIndex ? 'text-slate-700' : 'text-slate-500'}`}>{g.shots.length}</span>
+                <span className={`ml-2 text-xs ${i === groupIndex ? 'text-sky-100' : 'text-slate-400'}`}>{g.shots.length}</span>
               </button>
             ))}
           </div>
         </div>
-        <p className="mt-3 text-center text-sm text-slate-400">{groups[groupIndex].tagline}</p>
+        <p className="mt-3 text-center text-sm text-slate-500">{groups[groupIndex].tagline}</p>
 
         {/* Stage */}
         <div className="mt-8 group relative">
-          <div className="rounded-2xl border border-white/10 bg-slate-950 shadow-2xl overflow-hidden">
-            <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2.5">
-              <span className="size-3 rounded-full bg-red-400/70" />
-              <span className="size-3 rounded-full bg-yellow-400/70" />
-              <span className="size-3 rounded-full bg-green-400/70" />
-              <span className="ml-3 truncate text-xs text-slate-500">{shot.title}</span>
-              <span className="ml-auto text-xs text-slate-500 tabular-nums">{index + 1} / {allShots.length}</span>
+          <div className="absolute -inset-3 rounded-3xl bg-gradient-to-r from-sky-200/60 via-blue-200/40 to-indigo-200/60 blur-2xl pointer-events-none"></div>
+          <div className="relative rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-300/50 overflow-hidden">
+            <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2.5">
+              <span className="size-3 rounded-full bg-red-400" />
+              <span className="size-3 rounded-full bg-yellow-400" />
+              <span className="size-3 rounded-full bg-green-400" />
+              <span className="ml-3 truncate text-xs font-medium text-slate-500">{shot.title}</span>
+              <span className="ml-auto text-xs text-slate-400 tabular-nums">{index + 1} / {allShots.length}</span>
             </div>
-            <button type="button" onClick={() => setFullscreen(true)} aria-label={`View ${shot.title} fullscreen`} className="block w-full cursor-zoom-in bg-slate-100 aspect-[16/9]">
+            <button type="button" onClick={() => setFullscreen(true)} aria-label={`View ${shot.title} fullscreen`} className="block w-full cursor-zoom-in bg-white aspect-[16/9]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img key={shot.file} src={src(shot)} alt={shot.title} className="size-full object-contain" />
             </button>
@@ -141,18 +148,18 @@ export function NextSaasGallery() {
         </div>
 
         {/* Caption */}
-        <div className="mt-5 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
+        <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-white">{shot.title}</h3>
-            <p className="text-slate-400">{shot.desc}</p>
+            <h3 className="text-lg font-semibold text-slate-900">{shot.title}</h3>
+            <p className="text-slate-600">{shot.desc}</p>
           </div>
-          <Link href={shot.href} className="shrink-0 text-sm font-semibold text-cyan-400 hover:text-cyan-300">
+          <Link href={shot.href} className="shrink-0 text-sm font-semibold text-sky-600 hover:text-sky-700">
             Read the guide →
           </Link>
         </div>
 
         {/* Thumbnails */}
-        <div ref={thumbs} className="relative mt-6 flex gap-3 overflow-x-auto pb-3 snap-x [scrollbar-width:thin]">
+        <div ref={thumbs} className="relative mt-6 flex gap-3 overflow-x-auto px-1 pt-1 pb-3 snap-x [scrollbar-width:thin]">
           {allShots.map((s, i) => (
             <button
               key={s.file}
@@ -161,10 +168,12 @@ export function NextSaasGallery() {
               onClick={() => setIndex(i)}
               aria-label={s.title}
               aria-current={i === index}
-              className={`shrink-0 snap-start w-36 md:w-44 rounded-lg overflow-hidden border-2 transition-all ${i === index ? 'border-cyan-400 opacity-100' : 'border-transparent opacity-50 hover:opacity-90'}`}
+              className={`shrink-0 snap-start w-36 md:w-44 rounded-lg overflow-hidden border bg-white transition-all ${i === index
+                ? 'border-sky-500 ring-2 ring-sky-500/30 shadow-md'
+                : 'border-slate-200 opacity-70 hover:opacity-100 hover:border-slate-300 hover:shadow-sm'}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src(s)} alt="" loading="lazy" className="aspect-[16/9] w-full object-cover object-top bg-slate-100" />
+              <img src={src(s)} alt="" loading="lazy" className="aspect-[16/9] w-full object-cover object-top" />
             </button>
           ))}
         </div>
@@ -177,13 +186,13 @@ export function NextSaasGallery() {
           <div className="flex flex-wrap justify-center gap-4">
             <Link
               href={`${docs}/getting-started/overview`}
-              className="inline-flex items-center justify-center px-6 py-3 font-bold text-slate-900 transition-all duration-200 bg-cyan-400 rounded-full hover:bg-cyan-300 hover:shadow-[0_0_20px_rgba(34,211,238,0.6)]"
+              className="inline-flex items-center justify-center px-6 py-3 font-bold text-white transition-all duration-200 bg-sky-600 rounded-full shadow-sm hover:bg-sky-700 hover:shadow-lg hover:shadow-sky-500/30"
             >
               Get Started
             </Link>
             <Link
               href={docs}
-              className="inline-flex items-center justify-center px-6 py-3 font-bold text-white transition-all duration-200 border-2 border-slate-600 rounded-full hover:border-cyan-400/50 hover:bg-slate-800 hover:text-cyan-300"
+              className="inline-flex items-center justify-center px-6 py-3 font-bold text-slate-700 transition-all duration-200 bg-white border border-slate-300 rounded-full shadow-sm hover:border-sky-400 hover:text-sky-700"
             >
               Read the Docs
             </Link>
@@ -191,7 +200,7 @@ export function NextSaasGallery() {
               href="https://github.com/NetCoreTemplates/next-saas"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center px-4 py-3 font-medium text-slate-300 hover:text-white"
+              className="inline-flex items-center justify-center px-4 py-3 font-medium text-slate-600 hover:text-slate-900"
             >
               GitHub →
             </a>
