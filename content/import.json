@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "metadata": {
+    "defaults": {
+      "docType": "marketing",
+      "status": "published",
+      "product": "React",
+      "tags": [
+        "react"
+      ],
+      "sourceUrl": "https://react-templates.net/{pathNoExt}"
+    },
+    "rules": []
+  }
+}
