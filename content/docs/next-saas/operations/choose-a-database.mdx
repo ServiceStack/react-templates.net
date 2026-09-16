@@ -15,13 +15,29 @@ Only the deployment layer differs between providers, and it is selected with a
 [Kamal destination](https://kamal-deploy.org): the `DB_PROVIDER` repository variable, which
 defaults to `sqlite`.
 
-| Layer | `sqlite` | `postgres` |
-| --- | --- | --- |
-| Kamal overlay | `config/deploy.sqlite.yml` | `config/deploy.postgres.yml` |
-| Kamal secrets | `.kamal/secrets.sqlite` | `.kamal/secrets.postgres` |
-| Pre-deploy hook | none | `config/db/postgres/pre-deploy.sh` |
-| Accessory container | none | `<service>-postgres` |
-| Production JSON profile | `appsettings.deploy.sqlite.example.json` | `appsettings.deploy.postgres.example.json` |
+| Layer | `sqlite` | `postgres` | `mysql` | `sqlserver` |
+| --- | --- | --- | --- | --- |
+| Kamal overlay | `deploy.sqlite.yml` | `deploy.postgres.yml` | `deploy.mysql.yml` | `deploy.sqlserver.yml` |
+| Kamal secrets | `.kamal/secrets.sqlite` | `.kamal/secrets.postgres` | `.kamal/secrets.mysql` | `.kamal/secrets.sqlserver` |
+| Pre-deploy hook | none | `config/db/postgres/pre-deploy.sh` | `config/db/mysql/pre-deploy.sh` | `config/db/sqlserver/pre-deploy.sh` |
+| Accessory image | none | `postgres:18-alpine` | `mysql:8.4` | `mssql/server:2022-latest` |
+| Database and app login | n/a | `init.sh` initializer | image environment variables | `pre-deploy.sh` via `sqlcmd` |
+| Production JSON profile | `…sqlite…` | `…postgres…` | `…mysql…` | `…sqlserver…` |
+
+Every server provider takes the same single `DB_PASSWORD` and connects as an unprivileged login
+that owns only its own database, never as the cluster administrator.
+
+Two provider-specific constraints are worth knowing before choosing SQL Server:
+
+- **It enforces a password policy** — at least eight characters drawn from three of uppercase,
+  lowercase, digits, and symbols. A hex password satisfies only two categories and the container
+  refuses to start, so `configure-deployment.sh` rejects it first. Generate one with
+  `openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c 40`. It also needs roughly 2GB of memory,
+  which rules out the smallest hosts.
+- **It runs no initializer scripts**, unlike the PostgreSQL and MySQL images. Its pre-deploy hook
+  waits for the server to accept connections and then applies an idempotent `init.sql` through
+  `sqlcmd`, and creates the data directory owned by uid 10001 because the image cannot write to a
+  root-owned bind mount.
 
 `config/deploy.yml` and `.kamal/secrets-common` hold everything shared by all providers. Kamal
 deep-merges the destination overlay over the base file and reads `.kamal/secrets-common` followed
@@ -96,7 +112,7 @@ create schema and do not copy rows between providers.
 
 ## Add another provider
 
-Adding MySQL, SQL Server, or a managed database is additive:
+MySQL and SQL Server ship with the template. Adding a further RDBMS, or a managed database, is additive:
 
 1. add its OrmLite and EF Core packages and a `Database:Provider` branch in `MyApp/Configure.Db.cs`;
 2. add `config/deploy.<provider>.yml` and `.kamal/secrets.<provider>`;
