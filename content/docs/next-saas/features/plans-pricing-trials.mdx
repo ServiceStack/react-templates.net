@@ -48,7 +48,7 @@ A self-service paid Price must be active, positive, published, and mapped to a S
 
 ![Multi-Currency and Interval Plan Prices](/img/next-saas/plan-prices.png)
 
-Stripe catalog provisioning uses plan metadata and idempotency keys. It fills draft mappings but never publishes a plan automatically. Live provisioning requires explicit opt-in.
+Stripe catalog provisioning uses plan metadata and idempotency keys. It saves returned Price mappings directly into the draft but never publishes a plan automatically. Live provisioning requires explicit opt-in.
 
 ## Trials
 
