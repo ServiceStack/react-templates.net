@@ -29,8 +29,8 @@ Start with one of the checked-in JSON profiles rather than assembling configurat
 
 | Profile | Best for | Database | External services |
 | --- | --- | --- | --- |
-| `config/appsettings.deploy.sqlite.example.json` | First Kamal/domain/TLS validation | Durable SQLite, one instance | SMTP and Stripe optional |
-| `config/appsettings.deploy.postgres.example.json` | Real production operation | PostgreSQL | SMTP and Stripe required |
+| `appsettings.deploy.sqlite.example.json` | First Kamal/domain/TLS validation | Durable SQLite, one instance | SMTP and Stripe optional |
+| `appsettings.deploy.postgres.example.json` | Real production operation | PostgreSQL | SMTP and Stripe required |
 
 The SQLite profile is a supported validation path, not a horizontally scalable production architecture. The PostgreSQL transition is configuration-only for a new/empty deployment; an existing data-bearing SQLite database needs a planned data migration.
 

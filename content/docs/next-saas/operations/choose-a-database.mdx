@@ -21,7 +21,7 @@ defaults to `sqlite`.
 | Kamal secrets | `.kamal/secrets.sqlite` | `.kamal/secrets.postgres` |
 | Pre-deploy hook | none | `config/db/postgres/pre-deploy.sh` |
 | Accessory container | none | `<service>-postgres` |
-| Production JSON profile | `config/appsettings.deploy.sqlite.example.json` | `config/appsettings.deploy.postgres.example.json` |
+| Production JSON profile | `appsettings.deploy.sqlite.example.json` | `appsettings.deploy.postgres.example.json` |
 
 `config/deploy.yml` and `.kamal/secrets-common` hold everything shared by all providers. Kamal
 deep-merges the destination overlay over the base file and reads `.kamal/secrets-common` followed
