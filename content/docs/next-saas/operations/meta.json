@@ -7,6 +7,8 @@
         "secrets",
         "deployment",
         "database-and-storage",
+        "choose-a-database",
+        "setup-postgresql",
         "observability-and-health",
         "background-jobs-and-recovery",
         "external-services",

@@ -15,6 +15,8 @@ The checked-in GitHub workflows form three stages:
 
 `config/deploy.yml` configures Kamal Proxy TLS, `/up` rollout health checks, container port `8080`, runtime secrets, and a durable `App_Data` volume. The image contains no ServiceStack, application, database, Stripe, or SMTP secret.
 
+It is provider-agnostic. The database is selected by the `DB_PROVIDER` repository variable, which resolves a Kamal destination that merges `config/deploy.<provider>.yml` over it. See [Choose a database](/docs/next-saas/operations/choose-a-database).
+
 Both downstream workflows accept manual dispatch. Automatic runs proceed only after the preceding workflow succeeds and use its exact `head_sha`; this prevents a newer branch tip from being deployed in place of the revision that passed CI.
 
 ![Migration and Deployment Pipeline Flow](/img/next-saas/deploy-flow.png)
@@ -73,7 +75,7 @@ The PostgreSQL profile uses the same commands; only the source template changes.
   "SmtpConfig": { "Host": "...", "Port": 587, "UserName": "...", "Password": "...", "FromEmail": "noreply@your-host" },
   "Product": { "SupportEmail": "support@your-host" },
   "Stripe": { "PublishableKey": "pk_live_...", "SecretKey": "sk_live_...", "WebhookSecret": "whsec_..." },
-  "Deployment": { "EnforceStartupChecks": true, "RequirePostgreSql": true, "RequireSmtp": true, "RequireStripe": true, "AllowTestStripeKeys": false }
+  "Deployment": { "EnforceStartupChecks": true, "RequireNetworkDatabase": true, "RequireSmtp": true, "RequireStripe": true, "AllowTestStripeKeys": false }
 }
 ```
 
@@ -97,7 +99,7 @@ For this explicit temporary mode, override the production defaults:
     "DefaultConnection": "Data Source=App_Data/app.db;Cache=Shared"
   },
   "Deployment": {
-    "RequirePostgreSql": false,
+    "RequireNetworkDatabase": false,
     "RequireExplicitMigrations": false
   }
 }
@@ -178,6 +180,7 @@ Before adding instances:
 
 ## Related documentation
 
+- [Setup PostgreSQL](/docs/next-saas/operations/setup-postgresql)
 - [Database and storage](/docs/next-saas/operations/database-and-storage)
 - [Observability and health](/docs/next-saas/operations/observability-and-health)
 - [Backup and restore](/docs/next-saas/operations/backup-and-restore)

@@ -7,7 +7,9 @@ description: "The RDBMS is authoritative for Identity and SaaS metadata. IFileSt
 
 ## Database providers
 
-SQLite is the frictionless local default and allows the whole template to recreate from an empty file. It is also supported for a first single-host deployment check when the durable `App_Data` volume is mounted. The default production policy requires PostgreSQL.
+SQLite is the frictionless local default and allows the whole template to recreate from an empty file. It is also supported for a first single-host deployment check when the durable `App_Data` volume is mounted. The default production policy, `Deployment.RequireNetworkDatabase`, requires a networked database server.
+
+Deployment selects the provider with one repository variable rather than a code change. [Choose a database](/docs/next-saas/operations/choose-a-database) covers the switch, its Kamal destination layout, and how to add another RDBMS.
 
 `Configure.Db.cs` gives EF Core Identity and OrmLite product data the same connection. Keep their ownership separate even though they share the database:
 
@@ -19,6 +21,8 @@ The repository includes ready-to-customize deployment profiles:
 - `config/appsettings.deploy.sqlite.example.json` — one instance, durable volume, automatic empty-state creation;
 - `config/appsettings.deploy.postgres.example.json` — PostgreSQL, explicit release migrations, SMTP, and Stripe.
 
+`scripts/configure-deployment.sh --provider <name>` applies the chosen profile's database policy to the ignored production JSON, so the settings below rarely need editing by hand.
+
 Both providers use the same application code. Set PostgreSQL explicitly with JSON configuration or equivalent environment variables:
 
 ```bash
@@ -29,9 +33,15 @@ ConnectionStrings__DefaultConnection='Host=db;Database=acme;Username=acme;Passwo
 
 Grant the runtime account only required application privileges. Decide whether migrations use the same account or a separately controlled role.
 
+## Provider setup guides
+
+- [Setup PostgreSQL](/docs/next-saas/operations/setup-postgresql) — provision PostgreSQL 18 with Kamal and replace a disposable SQLite deployment.
+
+Keep provider-specific installation, connection, migration, verification, backup, and recovery instructions on separate setup pages so additional supported RDBMS guides can be added without turning this ownership overview into a platform runbook.
+
 ## Moving from SQLite to PostgreSQL
 
-For a disposable deployment-path test, discard the SQLite data, provision an empty PostgreSQL database, replace the deployment configuration, and redeploy. The migration task creates the current schema and reference data.
+For a disposable deployment-path test, discard the SQLite data, provision an empty PostgreSQL database, replace the deployment configuration, and redeploy. The migration task creates the current schema and reference data. Follow [Setup PostgreSQL](/docs/next-saas/operations/setup-postgresql) for the complete Kamal accessory, Stripe reset, cutover, verification, and rollback procedure.
 
 For retained customer data, changing `Database.Provider` is not a data migration. Back up both stores, stop writes, transform and import Identity plus SaaS tables, reconcile row counts and quotas, and only then direct the application to PostgreSQL. Treat uploaded file bytes separately: their object keys remain in the database while the configured `IFileStore` remains authoritative for content.
 
@@ -64,6 +74,7 @@ Do not copy live SQLite files without a database-aware snapshot method. WAL, dat
 
 ## Related documentation
 
+- [Setup PostgreSQL](/docs/next-saas/operations/setup-postgresql)
 - [Backup and restore](/docs/next-saas/operations/backup-and-restore)
 - [Background jobs and recovery](/docs/next-saas/operations/background-jobs-and-recovery)
 - [Database migrations](/docs/next-saas/development/database-migrations)

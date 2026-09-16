@@ -135,7 +135,7 @@ Or publish the host directly with your desired runtime/container options:
 dotnet publish MyApp/MyApp.csproj -c Release
 ```
 
-The included `config/deploy.yml` is a reusable Kamal starting point. It declares Production, forwarded headers, persistent `App_Data`, TLS proxying, and `/up` health checks. Adapt its secrets and storage architecture before use.
+The included `config/deploy.yml` is a reusable Kamal starting point. It declares Production, forwarded headers, persistent `App_Data`, TLS proxying, and `/up` health checks. It deliberately declares no database accessory: the provider is selected separately with the `DB_PROVIDER` repository variable, described in [Choose a database](/docs/next-saas/operations/choose-a-database). Adapt its secrets and storage architecture before use.
 
 ## 8. Validate the deployment
 

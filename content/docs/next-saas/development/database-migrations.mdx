@@ -32,7 +32,11 @@ During active template development, the repository intentionally supports reshap
 
 `ApplicationDbContext` owns users, roles, logins, and Identity tokens. Use EF migrations for Identity model changes. Do not map SaaS product entities into EF merely because Identity already uses it.
 
-SQLite uses checked-in EF migrations when present. PostgreSQL currently bootstraps Identity from the current model with `EnsureCreated`, matching the template's clean-state development policy. A production-derived product should adopt a deliberate EF migration strategy before preserving PostgreSQL data across model changes.
+SQLite uses checked-in EF migrations when present, applied with `Migrate()`.
+
+PostgreSQL bootstraps Identity from the current model instead, matching the template's clean-state development policy. It cannot simply call `EnsureCreated()`, which creates tables only when the database has none: ServiceStack features such as API keys and CrudEvents create their own tables while the application starts, and a release deploys the application before it runs the migration task. By then the database is no longer empty and `EnsureCreated()` would silently create nothing, leaving the migration to fail on `relation "AspNetRoles" does not exist`. The task therefore creates the Identity schema explicitly when `AspNetUsers` is absent, so the outcome does not depend on nothing else having touched the database first.
+
+A production-derived product should adopt a deliberate EF migration strategy before preserving PostgreSQL data across model changes.
 
 ## Run and inspect
 

@@ -1,0 +1,150 @@
+---
+title: "Choose a database"
+description: "SQLite is the default. Switching to PostgreSQL or another RDBMS is a one-variable configuration change, not a pipeline fork."
+---
+
+[Operations](/docs/next-saas/operations) · [Database and storage](/docs/next-saas/operations/database-and-storage) · [Deployment](/docs/next-saas/operations/deployment)
+
+## The switch
+
+The application is already provider-agnostic. `MyApp/Configure.Db.cs` branches on
+`Database:Provider` to configure both OrmLite and EF Core from one connection string, and the
+provider packages for SQLite and PostgreSQL are referenced by default.
+
+Only the deployment layer differs between providers, and it is selected with a
+[Kamal destination](https://kamal-deploy.org): the `DB_PROVIDER` repository variable, which
+defaults to `sqlite`.
+
+| Layer | `sqlite` | `postgres` |
+| --- | --- | --- |
+| Kamal overlay | `config/deploy.sqlite.yml` | `config/deploy.postgres.yml` |
+| Kamal secrets | `.kamal/secrets.sqlite` | `.kamal/secrets.postgres` |
+| Pre-deploy hook | none | `config/db/postgres/pre-deploy.sh` |
+| Accessory container | none | `<service>-postgres` |
+| Production JSON profile | `config/appsettings.deploy.sqlite.example.json` | `config/appsettings.deploy.postgres.example.json` |
+
+`config/deploy.yml` and `.kamal/secrets-common` hold everything shared by all providers. Kamal
+deep-merges the destination overlay over the base file and reads `.kamal/secrets-common` followed
+by `.kamal/secrets.<provider>`.
+
+The Release workflow passes `-d "$DB_PROVIDER"` to every `kamal` command and runs
+`config/db/$DB_PROVIDER/pre-deploy.sh` when that file exists. A provider with no database server
+simply has no hook. Nothing in the workflow names a specific provider, so adding one never edits
+the pipeline.
+
+## Start on SQLite
+
+SQLite is the default because a first deployment then needs no external service. It verifies the
+domain, TLS, persistent volume, empty-state creation, login, files, jobs, and application APIs on
+their own before a database server is introduced.
+
+```bash
+cp config/appsettings.deploy.sqlite.example.json MyApp/appsettings.Production.json
+# Customize every example value.
+./scripts/configure-deployment.sh \
+  --provider sqlite \
+  --service my-app \
+  --repo owner/my-app \
+  --set-github-secrets
+```
+
+Its constraints are real and deliberate:
+
+- run exactly one application instance; SQLite cannot be shared by several containers;
+- keep `/opt/docker/<service>/App_Data` on durable storage;
+- back up `App_Data`, since there is no separate database server to replicate from.
+
+Because of those constraints, `Deployment.RequireNetworkDatabase` is `true` by default and the
+SQLite profile disables it explicitly. That override is the recorded decision to accept a
+single-instance deployment.
+
+## Switch to PostgreSQL
+
+```bash
+export DB_PASSWORD="$(openssl rand -hex 32)"
+
+./scripts/configure-deployment.sh \
+  --provider postgres \
+  --service my-app \
+  --repo owner/my-app \
+  --set-github-secrets
+```
+
+A provider that runs a database server needs exactly one operator-managed secret, `DB_PASSWORD`.
+`.kamal/secrets.postgres` maps it to both the unprivileged application login and the
+`POSTGRES_PASSWORD` the postgres image requires to initialize its cluster superuser. The
+application still connects as a non-superuser role, so a compromised application cannot administer
+the cluster, but the two logins share one password value; give the superuser its own secret if you
+need them to differ.
+
+Both scripts read `.env` the same way `config/deploy.yml` does, so `DB_PROVIDER` and `DB_PASSWORD`
+set there are picked up automatically and `--provider` defaults to `$DB_PROVIDER`.
+
+`configure-deployment.sh` rewrites only the `Database`, `ConnectionStrings`, and `Deployment`
+policy sections of the ignored production JSON, backs the file up first, runs
+`scripts/preflight.sh`, and then uploads `APPSETTINGS_JSON`, the `DB_PROVIDER` variable, and
+`DB_PASSWORD`. Every other setting in the file is preserved, so switching providers does
+not disturb Stripe, SMTP, or product configuration.
+
+The next release boots the `<service>-postgres` accessory, deploys, and runs the explicit
+migration task. [Setup PostgreSQL](/docs/next-saas/operations/setup-postgresql) is the full
+runbook, including the clean-Stripe-sandbox and reset steps.
+
+Switching providers against an empty deployment is configuration-only. Switching after customer
+data exists requires a separately planned data migration, because application schema migrations
+create schema and do not copy rows between providers.
+
+## Add another provider
+
+Adding MySQL, SQL Server, or a managed database is additive:
+
+1. add its OrmLite and EF Core packages and a `Database:Provider` branch in `MyApp/Configure.Db.cs`;
+2. add `config/deploy.<provider>.yml` and `.kamal/secrets.<provider>`;
+3. add `config/db/<provider>/pre-deploy.sh` if an accessory must be booted;
+4. add `config/appsettings.deploy.<provider>.example.json` and a branch in `scripts/configure-deployment.sh`;
+5. set the `DB_PROVIDER` repository variable to the new name.
+
+For a managed database hosted elsewhere, steps 2 and 3 collapse to an overlay declaring no
+accessory. Only the connection string in the production JSON changes.
+
+## Constraints worth knowing
+
+Three Kamal behaviors shape this layout:
+
+- **A destination config file must exist, and must parse as a YAML mapping.** `kamal ... -d sqlite`
+  fails if `config/deploy.sqlite.yml` is absent. A file containing only comments is just as bad:
+  it loads as `false` and fails with `undefined method 'symbolize_keys' for false`. That is why the
+  SQLite overlay carries an explicit `accessories: {}` rather than comments alone. The Release
+  workflow checks the file exists first and fails with the list of available providers rather than
+  a Kamal stack trace.
+- **A destination replaces the secrets file.** With `-d` in play, Kamal reads
+  `.kamal/secrets-common` and `.kamal/secrets.<destination>`, and never plain `.kamal/secrets`.
+  Shared values such as `KAMAL_REGISTRY_PASSWORD` and `APPSETTINGS_JSON_BASE64` therefore live in
+  `.kamal/secrets-common`. Any `kamal` command run without `-d` will not see the provider's
+  credentials.
+- **The merge replaces arrays.** An overlay that redefines `volumes` replaces the base list rather
+  than appending to it, so it must restate every entry it still needs.
+
+- **A destination scopes container names and labels.** Containers are named
+  `<service>-web-<destination>-<version>` and labelled `destination=<destination>`, and every Kamal
+  removal filters on that label. `kamal app remove -d sqlite` therefore cannot see a deployment made
+  under a different destination, or under none at all. This matters when switching providers on a
+  live host: deploying with a new `DB_PROVIDER` creates a parallel set of containers rather than
+  replacing the old ones, and both would then claim the same proxy host. Reset before switching
+  providers rather than flipping the variable under a running deployment.
+- **Kamal deregisters a proxy service only while its container is still running.** A route can
+  therefore outlive the container that served it, leaving the host returning 502 and colliding with
+  the next deployment. `scripts/reset-kamal-deployment.sh` sweeps every scope and additionally
+  removes each `<service>-<role>[-<destination>]` registration by name, independently of container
+  state, for exactly this reason.
+
+A destination also changes the `latest-<destination>` image tag and the
+`.kamal/apps/<service>-<destination>` directory on the host. It does not change the Kamal `service`
+label, so an exact `label=service=<service>` filter still matches every scope.
+
+## Related documentation
+
+- [Database and storage](/docs/next-saas/operations/database-and-storage)
+- [Setup PostgreSQL](/docs/next-saas/operations/setup-postgresql)
+- [Deployment](/docs/next-saas/operations/deployment)
+- [Configuration](/docs/next-saas/operations/configuration)

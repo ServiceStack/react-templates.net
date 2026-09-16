@@ -1,0 +1,316 @@
+---
+title: "Setup PostgreSQL"
+description: "Replace a disposable SQLite Kamal deployment with a clean PostgreSQL 18 deployment and verify every gate."
+---
+
+[Operations](/docs/next-saas/operations) · [Choose a database](/docs/next-saas/operations/choose-a-database) · [Database and storage](/docs/next-saas/operations/database-and-storage) · [Deployment](/docs/next-saas/operations/deployment)
+
+## Scope
+
+[Choose a database](/docs/next-saas/operations/choose-a-database) explains the provider switch itself and is the shorter path when there is no deployment to discard. This page is the destructive runbook.
+
+This runbook replaces a disposable SQLite deployment with a new PostgreSQL 18 database. It does not migrate users, organizations, subscriptions, usage, files, data-protection keys, or any other application state.
+
+The reset is intentionally destructive. `scripts/reset-kamal-deployment.sh --yes` removes the named application's containers, images, and kamal-proxy registration; every accessory container declared by any destination; the `~/.kamal/apps/<service>*` directories holding deployment env files; and all service-owned state under `/opt/docker/<service>`. It preserves the shared Kamal proxy and network, unrelated deployments, GitHub Actions secrets, and external Stripe environments.
+
+Use a new blank [Stripe Sandbox](https://docs.stripe.com/sandboxes) so Products, Prices, Customers, Subscriptions, webhook events, and idempotency history from the discarded SQLite database cannot be reattached accidentally.
+
+## What is automated
+
+The repository includes two operator scripts:
+
+| Script | Purpose |
+| --- | --- |
+| `scripts/configure-deployment.sh` | Backs up and updates the ignored production JSON for the selected provider, validates it, and optionally uploads the provider credentials, `APPSETTINGS_JSON`, and the `DB_PROVIDER` variable to GitHub Actions. |
+| `scripts/reset-kamal-deployment.sh` | Previews or removes only the named Kamal service: its containers, images, proxy registration, app directories, every declared accessory, and `/opt/docker/<service>` state. |
+
+The Release workflow runs the provider's pre-deploy hook, which boots or starts the PostgreSQL accessory, then deploys the application, runs the explicit migration task, and verifies `/ready`. Creating a Stripe sandbox, webhook destination, and test subscription remains an operator task.
+
+## 1. Prepare the PostgreSQL deployment change
+
+PostgreSQL is a Kamal destination. `config/deploy.postgres.yml` is merged over the provider-agnostic `config/deploy.yml` whenever the Release workflow runs with `DB_PROVIDER=postgres`, and it defines a private PostgreSQL 18 accessory named from the Kamal service:
+
+```yaml
+# config/deploy.postgres.yml
+accessories:
+  postgres:
+    service: <%= ENV['SERVICE'] %>-postgres
+    image: postgres:18-alpine
+    host: <%= ENV['KAMAL_DEPLOY_IP'] %>
+    env:
+      clear:
+        POSTGRES_USER: postgres
+        POSTGRES_DB: postgres
+      secret:
+        - POSTGRES_PASSWORD
+        - DB_PASSWORD
+    files:
+      - config/db/postgres/init.sh:/docker-entrypoint-initdb.d/10-next-saas.sh
+    volumes:
+      - /opt/docker/<%= ENV['SERVICE'] %>/postgres-18:/var/lib/postgresql
+```
+
+PostgreSQL 18 stores cluster data below the versioned `/var/lib/postgresql/18/docker` directory, so its persistent mount is `/var/lib/postgresql`. Do not use the PostgreSQL 17-and-earlier `/var/lib/postgresql/data` mount.
+
+On first boot, `config/db/postgres/init.sh` creates a non-superuser `next_saas` login and an empty `next_saas` database owned by that role. Initializer files only run against an empty PostgreSQL data directory.
+
+This makes the first boot decisive: the password baked into the role is whatever `DB_PASSWORD` held at that moment. If the accessory is ever booted with a different value, the application cannot authenticate, and re-running the deployment will not repair it because the initializer is skipped on a populated data directory. Recovery means removing the accessory and its `/opt/docker/<service>/postgres-18` data directory so the next boot initializes cleanly.
+
+`.kamal/secrets.postgres` supplies both from one operator-managed `DB_PASSWORD`, alongside the shared values in `.kamal/secrets-common`. The application login stays a non-superuser role; it simply shares the superuser's password value. Any `kamal` command run by hand must therefore pass `-d postgres`, or it will not see these credentials.
+
+Keep these changes on a branch until the production secrets and reset are ready. Merging to `main` or `master` can trigger Build Container followed by Release automatically.
+
+## 2. Create a clean Stripe Sandbox
+
+In the Stripe Dashboard, create a general sandbox for this deployment and choose **Create an account from scratch**. Obtain its `pk_test_...` and `sk_test_...` keys.
+
+Create a webhook event destination for:
+
+```text
+https://next-saas.react-templates.net/stripe/webhook
+```
+
+Subscribe it to:
+
+```text
+checkout.session.completed
+customer.subscription.created
+customer.subscription.updated
+customer.subscription.deleted
+invoice.paid
+invoice.payment_failed
+```
+
+Save the new `whsec_...` signing secret. Leave `Stripe.PortalConfigurationId` empty unless a new portal configuration was created in this sandbox. Do not copy Product, Price, Customer, Subscription, Coupon, Promotion Code, or Portal IDs from the retired environment.
+
+## 3. Build the replacement production JSON
+
+From the PostgreSQL branch, create the ignored local production file if it does not already exist:
+
+```bash
+cp config/appsettings.deploy.postgres.example.json \
+  MyApp/appsettings.Production.json
+```
+
+Customize its public hostname, support and notification settings, temporary `BootstrapAdmin`, and the new Stripe sandbox keys. For a test deployment, set:
+
+```json
+{
+  "Stripe": {
+    "PublishableKey": "pk_test_...",
+    "SecretKey": "sk_test_...",
+    "WebhookSecret": "whsec_...",
+    "PortalConfigurationId": ""
+  },
+  "Deployment": {
+    "RequireStripe": true,
+    "RequireStripeWebhook": true,
+    "AllowTestStripeKeys": true
+  }
+}
+```
+
+Generate the database password in the current shell:
+
+```bash
+export DB_PASSWORD="$(openssl rand -hex 32)"
+```
+
+`configure-deployment.sh` requires at least 24 characters and rejects a semicolon, which would terminate the `Password` field of the ADO.NET connection string.
+
+Then update the database section, run the production preflight, and upload the GitHub Actions secrets and the `DB_PROVIDER` variable:
+
+```bash
+./scripts/configure-deployment.sh \
+  --provider postgres \
+  --service next-saas \
+  --repo NetCoreTemplates/next-saas \
+  --set-github-secrets
+```
+
+The script preserves the other JSON settings and sets:
+
+```text
+Database.Provider=PostgreSql
+Database.AutoMigrateEmpty=false
+ConnectionStrings.DefaultConnection=Host=next-saas-postgres;Port=5432;Database=next_saas;Username=next_saas;Password=...;SSL Mode=Disable
+Deployment.RequireNetworkDatabase=true
+Deployment.RequireExplicitMigrations=true
+```
+
+It also sets the `DB_PROVIDER` repository variable to `postgres`, which is what makes the next release select this destination.
+
+`SSL Mode=Disable` is appropriate only for this same-host private Kamal network with no published PostgreSQL port. Use verified TLS for a managed database or a database on another host.
+
+The script creates a timestamped `0600` backup beside the JSON before changing it. It does not commit the ignored file or print either database password.
+
+Do not proceed unless preflight finishes with zero errors:
+
+```bash
+./scripts/preflight.sh \
+  --json MyApp/appsettings.Production.json \
+  --config-only
+```
+
+Updating GitHub secrets does not deploy by itself.
+
+## 4. Preview the Kamal reset
+
+Use the same operator environment used for a normal Kamal deployment, including the deploy host, SSH access, registry credentials, and the exported `DB_PASSWORD`.
+
+Preview the exact scope:
+
+```bash
+./scripts/reset-kamal-deployment.sh --service next-saas --provider postgres
+```
+
+For `next-saas`, the preview must show:
+
+```text
+database provider:    postgres
+accessory containers: next-saas-postgres
+app directories:      ~/.kamal/apps/next-saas ~/.kamal/apps/next-saas-postgres ~/.kamal/apps/next-saas-sqlite
+persistent state:     /opt/docker/next-saas
+```
+
+`--provider` only selects which configuration and secrets Kamal loads; it never narrows what is removed. The reset always removes every accessory and app directory belonging to the service, so resetting a PostgreSQL deployment in order to move to SQLite still removes the PostgreSQL container rather than deleting its data directory while it runs.
+
+The reset also requires the same environment variables as a normal deployment — `IMAGE`, `KAMAL_DEPLOY_IP`, `KAMAL_DEPLOY_HOST`, `KAMAL_REGISTRY_USERNAME`, and `KAMAL_REGISTRY_PASSWORD` — and refuses before touching the host if any are missing.
+
+It must also state that the shared proxy/network and unrelated services are preserved. The preview performs no remote mutation and does not require Kamal to be installed.
+
+Stop if the service or path is not exact. The confirmed reset has no application-data rollback because it removes SQLite, file storage, data-protection keys, job data, request logs, and any previous PostgreSQL data owned by this service.
+
+## 5. Reset the deployment
+
+Begin the change window and run:
+
+```bash
+./scripts/reset-kamal-deployment.sh \
+  --service next-saas \
+  --provider postgres \
+  --yes
+```
+
+The script:
+
+1. releases any Kamal lock left by an earlier failed deploy;
+2. runs `kamal app remove` once per scope — every destination first, then the no-destination legacy deployment — because Kamal filters removal by the `destination=` label and cannot otherwise see deployments made under a different one. The order matters: without `-d` the label filters omit `destination=`, so the legacy scope stops every destination's containers, and Kamal only deregisters a proxy service while that service's container is still running;
+3. removes every `<service>-<role>[-<destination>]` kamal-proxy registration by name, so a route cannot outlive its container and leave the host serving 502 or colliding with the next deployment under a different destination;
+4. sweeps any container or image still carrying the exact `service=<service>` label, then removes every accessory container declared by any destination, including `next-saas-postgres`, using `docker container rm --force` because Kamal's own accessory removal skips running containers;
+5. removes the remaining `~/.kamal/apps/next-saas*` directories, which hold the deployment env files, and `~/next-saas-postgres`, where Kamal uploads the accessory's `files:`;
+6. removes exactly `/opt/docker/next-saas`;
+7. verifies that the service state, containers, app directories, and proxy registrations are absent, and fails loudly if any survive.
+
+It deliberately does not use the broader `kamal remove`, which would also remove shared Kamal infrastructure.
+
+## 6. Deploy from scratch
+
+Merge the prepared PostgreSQL branch to `main` or `master` and let Build Container and Release finish. If the automatic Release was not triggered, dispatch it manually:
+
+```bash
+gh workflow run Release --repo NetCoreTemplates/next-saas
+```
+
+The Release job must complete these gates in order:
+
+1. Kamal bootstrap;
+2. run `config/db/postgres/pre-deploy.sh`, which boots the new PostgreSQL accessory;
+3. deploy the application container;
+4. run the explicit migration task;
+5. receive a successful response from the public `/ready` endpoint.
+
+The application may fail readiness between deployment and migration because the database is deliberately empty. The release is accepted only after the migration and final readiness check succeed.
+
+## 7. Verify PostgreSQL
+
+Inspect the accessory and its readiness:
+
+```bash
+kamal accessory details postgres -d postgres
+kamal accessory logs postgres -d postgres --lines 100
+kamal accessory exec postgres --reuse -d postgres \
+  "pg_isready --username postgres --dbname postgres"
+```
+
+Every `kamal` command below carries `-d postgres` for the same reason: the destination selects both `config/deploy.postgres.yml` and `.kamal/secrets.postgres`.
+
+Verify that the runtime role is a login but not a superuser:
+
+```bash
+kamal accessory exec postgres --reuse -d postgres \
+  "psql --username postgres --dbname postgres --tuples-only --command=\"select rolname, rolsuper, rolcanlogin from pg_roles where rolname='next_saas';\""
+```
+
+The result must contain `next_saas`, `f`, and `t`. Verify the migrated schema and seeded plans:
+
+```bash
+kamal accessory exec postgres --reuse -d postgres \
+  "psql --username postgres --dbname next_saas --command='\\dt'"
+kamal accessory exec postgres --reuse -d postgres \
+  "psql --username postgres --dbname next_saas --command='select \"Code\", \"Name\" from \"SaasPlan\" order by \"DisplayOrder\";'"
+```
+
+The schema must contain the Identity and SaaS tables. The plan query must return Free, Pro, Business, and Enterprise.
+
+Verify both public health endpoints:
+
+```bash
+export NEXT_SAAS_URL=https://next-saas.react-templates.net
+curl -fsS "$NEXT_SAAS_URL/up"
+curl -fsS "$NEXT_SAAS_URL/ready"
+```
+
+Both responses must be `Healthy`.
+
+## 8. Verify clean application and Stripe state
+
+Sign in with the temporary bootstrap administrator. Confirm `/admin`, `/admin/plans`, and the public pricing page load. Create a disposable customer user and confirm a new personal organization is created.
+
+The new PostgreSQL database must not contain users, organizations, subscriptions, usage records, or Stripe mappings from the retired deployment.
+
+For each self-serve paid plan in **Plans & billing**:
+
+1. open its draft;
+2. select **Create missing in Stripe**;
+3. confirm the draft now contains Product and Price IDs from the new sandbox;
+4. publish the changes.
+
+Complete one checkout with a [Stripe test card](https://docs.stripe.com/testing#cards). Verify:
+
+- Checkout returns to the billing page and the organization becomes subscribed;
+- the new sandbox contains the expected Customer and Subscription;
+- the webhook destination reports successful `2xx` deliveries;
+- the Operations Center shows processed Stripe inbox events with no failure;
+- PostgreSQL contains the new `BillingSubscription` and `StripeEventInbox` rows;
+- the Stripe Customer Portal opens and returns to the application;
+- a paid entitlement or quota check succeeds.
+
+## 9. Remove bootstrap credentials
+
+After administrator sign-in and billing verification succeed, remove the entire `BootstrapAdmin` section from `MyApp/appsettings.Production.json`, run preflight again, upload the replacement secret, and dispatch Release:
+
+```bash
+./scripts/preflight.sh \
+  --json MyApp/appsettings.Production.json \
+  --config-only
+gh secret set APPSETTINGS_JSON \
+  --repo NetCoreTemplates/next-saas \
+  < MyApp/appsettings.Production.json
+gh workflow run Release --repo NetCoreTemplates/next-saas
+```
+
+Confirm the existing administrator still signs in and `/ready` remains healthy.
+
+## 10. Retire the old Stripe environment
+
+After the observation period, delete the old general Stripe sandbox. If it is a non-deletable test-mode environment, follow [Stripe's test-data deletion instructions](https://docs.stripe.com/testing-use-cases#delete-test-data). This is separate from the Kamal reset script and is intentionally performed only after the new sandbox passes checkout and webhook verification.
+
+Record the deployed revision, PostgreSQL owner, backup policy, new Stripe sandbox, webhook destination, and acceptance results.
+
+## Related documentation
+
+- [Choose a database](/docs/next-saas/operations/choose-a-database)
+- [Database and storage](/docs/next-saas/operations/database-and-storage)
+- [Deployment](/docs/next-saas/operations/deployment)
+- [Backup and restore](/docs/next-saas/operations/backup-and-restore)

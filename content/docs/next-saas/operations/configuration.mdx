@@ -54,7 +54,7 @@ Set `ASPNETCORE_ENVIRONMENT=Production` explicitly. Behind a trusted reverse pro
 
 `Deployment.EnforceStartupChecks` runs `ProductionReadiness` before traffic is served. Defaults require HTTPS, restricted hosts, PostgreSQL, SMTP, Stripe with verified webhooks, non-test Stripe keys, and explicit migrations.
 
-Relax an individual `Deployment` requirement only when the product genuinely does not need it or for a deliberate single-host validation—for example SQLite before PostgreSQL, or a free-only internal service. `preflight.sh` honors the same `Deployment.RequirePostgreSql`, `RequireExplicitMigrations`, `RequireSmtp`, `RequireStripe`, and `RequireStripeWebhook` switches as runtime startup validation and emits warnings for reduced modes. Treat every override as a recorded architecture decision, not a way around preflight.
+Relax an individual `Deployment` requirement only when the product genuinely does not need it or for a deliberate single-host validation—for example SQLite before PostgreSQL, or a free-only internal service. `preflight.sh` honors the same `Deployment.RequireNetworkDatabase`, `RequireExplicitMigrations`, `RequireSmtp`, `RequireStripe`, and `RequireStripeWebhook` switches as runtime startup validation and emits warnings for reduced modes. Treat every override as a recorded architecture decision, not a way around preflight.
 
 ## Validate
 
