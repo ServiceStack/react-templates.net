@@ -63,9 +63,7 @@ For an already running derived product, add a forward migration or create and pu
 
 Recreate the development database after changing clean-state seeds:
 
-```bash
-ASPNETCORE_ENVIRONMENT=Development ./scripts/reset-dev.sh --yes
-```
+<CopyBlock>{`ASPNETCORE_ENVIRONMENT=Development ./scripts/reset-dev.sh --yes`}</CopyBlock>
 
 ## 3. Define the API contract
 
@@ -167,9 +165,7 @@ At minimum, test:
 
 Run the full gate:
 
-```bash
-./scripts/verify.sh
-```
+<CopyBlock>{`./scripts/verify.sh`}</CopyBlock>
 
 ## Completion checklist
 

@@ -11,7 +11,7 @@ description: "Replace a disposable SQLite Kamal deployment with a clean PostgreS
 
 This runbook replaces a disposable SQLite deployment with a new PostgreSQL 18 database. It does not migrate users, organizations, subscriptions, usage, files, data-protection keys, or any other application state.
 
-The reset is intentionally destructive. `scripts/reset-kamal-deployment.sh --yes` removes the named application's containers, images, and kamal-proxy registration; every accessory container declared by any destination; the `~/.kamal/apps/<service>*` directories holding deployment env files; and all service-owned state under `/opt/docker/<service>`. It preserves the shared Kamal proxy and network, unrelated deployments, GitHub Actions secrets, and external Stripe environments.
+The reset is intentionally destructive. Once confirmed with `--yes`, `scripts/reset-kamal-deployment.sh` removes the named application's containers, images, and kamal-proxy registration; every accessory container declared by any destination; the `~/.kamal/apps/<service>*` directories holding deployment env files; and all service-owned state under `/opt/docker/<service>`. It preserves the shared Kamal proxy and network, unrelated deployments, GitHub Actions secrets, and external Stripe environments.
 
 Use a new blank [Stripe Sandbox](https://docs.stripe.com/sandboxes) so Products, Prices, Customers, Subscriptions, webhook events, and idempotency history from the discarded SQLite database cannot be reattached accidentally.
 
@@ -87,10 +87,7 @@ Save the new `whsec_...` signing secret. Leave `Stripe.PortalConfigurationId` em
 
 From the PostgreSQL branch, create the ignored local production file if it does not already exist:
 
-```bash
-cp config/appsettings.deploy.postgres.example.json \
-  MyApp/appsettings.Production.json
-```
+<CopyBlock>{`cp config/appsettings.deploy.postgres.example.json MyApp/appsettings.Production.json`}</CopyBlock>
 
 Customize its public hostname, support and notification settings, temporary `BootstrapAdmin`, and the new Stripe sandbox keys. For a test deployment, set:
 
@@ -112,9 +109,7 @@ Customize its public hostname, support and notification settings, temporary `Boo
 
 Generate the database password in the current shell:
 
-```bash
-export DB_PASSWORD="$(openssl rand -hex 32)"
-```
+<CopyBlock>{`export DB_PASSWORD="$(openssl rand -hex 32)"`}</CopyBlock>
 
 `configure-deployment.sh` requires at least 24 characters and rejects a semicolon, which would terminate the `Password` field of the ADO.NET connection string.
 
@@ -146,11 +141,7 @@ The script creates a timestamped `0600` backup beside the JSON before changing i
 
 Do not proceed unless preflight finishes with zero errors:
 
-```bash
-./scripts/preflight.sh \
-  --json MyApp/appsettings.Production.json \
-  --config-only
-```
+<CopyBlock>{`./scripts/preflight.sh --json MyApp/appsettings.Production.json --config-only`}</CopyBlock>
 
 Updating GitHub secrets does not deploy by itself.
 
@@ -160,9 +151,7 @@ Use the same operator environment used for a normal Kamal deployment, including 
 
 Preview the exact scope:
 
-```bash
-./scripts/reset-kamal-deployment.sh --service next-saas --provider postgres
-```
+<CopyBlock>{`./scripts/reset-kamal-deployment.sh --service next-saas --provider postgres`}</CopyBlock>
 
 For `next-saas`, the preview must show:
 
@@ -185,12 +174,7 @@ Stop if the service or path is not exact. The confirmed reset has no application
 
 Begin the change window and run:
 
-```bash
-./scripts/reset-kamal-deployment.sh \
-  --service next-saas \
-  --provider postgres \
-  --yes
-```
+<CopyBlock>{`./scripts/reset-kamal-deployment.sh --service next-saas --provider postgres --yes`}</CopyBlock>
 
 The script:
 
@@ -208,9 +192,7 @@ It deliberately does not use the broader `kamal remove`, which would also remove
 
 Merge the prepared PostgreSQL branch to `main` or `master` and let Build Container and Release finish. If the automatic Release was not triggered, dispatch it manually:
 
-```bash
-gh workflow run Release --repo NetCoreTemplates/next-saas
-```
+<CopyBlock>{`gh workflow run Release --repo NetCoreTemplates/next-saas`}</CopyBlock>
 
 The Release job must complete these gates in order:
 

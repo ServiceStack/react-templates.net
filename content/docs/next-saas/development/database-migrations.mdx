@@ -53,9 +53,7 @@ An empty database also bootstraps automatically when `Database.AutoMigrateEmpty`
 
 For a complete local reset:
 
-```bash
-ASPNETCORE_ENVIRONMENT=Development ./scripts/reset-dev.sh --yes
-```
+<CopyBlock>{`ASPNETCORE_ENVIRONMENT=Development ./scripts/reset-dev.sh --yes`}</CopyBlock>
 
 This deletes the local SQLite database and local file store, then recreates users, roles, plans, and product tables. It is intentionally guarded and destructive.
 

@@ -9,9 +9,7 @@ description: "Tests should concentrate on SaaS policy boundaries: authorization,
 
 Run all .NET tests from the repository root:
 
-```bash
-dotnet test MyApp.slnx
-```
+<CopyBlock>{`dotnet test MyApp.slnx`}</CopyBlock>
 
 Use fast in-memory SQLite tests for policy and persistence behavior. Seed only the minimum organization, membership, plan version, subscription, quota, and period needed for the scenario. Assert stable HTTP error codes as well as status.
 
@@ -47,9 +45,7 @@ When testing effects, assert the request count as well as rendered output. This 
 
 ## Full repository gate
 
-```bash
-./scripts/verify.sh
-```
+<CopyBlock>{`./scripts/verify.sh`}</CopyBlock>
 
 This builds and tests .NET, type-checks/tests/builds React, then starts production mode against a fresh temporary SQLite database and verifies empty-state bootstrap. Run it before handing off any cross-cutting change.
 

@@ -16,9 +16,7 @@ cd MyApp.Client && npm run typecheck && npm run test:run && npm run build
 
 If disposable SQLite state is inconsistent:
 
-```bash
-ASPNETCORE_ENVIRONMENT=Development ./scripts/reset-dev.sh --yes
-```
+<CopyBlock>{`ASPNETCORE_ENVIRONMENT=Development ./scripts/reset-dev.sh --yes`}</CopyBlock>
 
 This removes the documented local database and file store. Never use it against production or data that matters.
 

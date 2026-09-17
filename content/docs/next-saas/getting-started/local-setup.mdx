@@ -17,9 +17,7 @@ Stripe CLI is optional until the Stripe sandbox step. PostgreSQL is only require
 
 Confirm the local toolchain from the repository root:
 
-```bash
-./scripts/doctor.sh
-```
+<CopyBlock>{`./scripts/doctor.sh`}</CopyBlock>
 
 Warnings about Stripe or email are expected for a new local checkout. Errors should be resolved before continuing.
 
@@ -90,9 +88,7 @@ API contracts and diagnostic tools are available at `/scalar/v1`, `/ui`, and `/a
 
 This template is designed to recreate itself from an empty development database. Stop the application, then run:
 
-```bash
-ASPNETCORE_ENVIRONMENT=Development ./scripts/reset-dev.sh --yes
-```
+<CopyBlock>{`ASPNETCORE_ENVIRONMENT=Development ./scripts/reset-dev.sh --yes`}</CopyBlock>
 
 The script validates exact paths before removing `MyApp/App_Data/app.db` and `MyApp/App_Data/files`. It then runs the migration task. It refuses to run outside Development or without `--yes`.
 
@@ -104,9 +100,7 @@ ServiceStack Background Jobs and request logs use separate generated SQLite data
 
 Trust the ASP.NET Core development certificate:
 
-```bash
-dotnet dev-certs https --trust
-```
+<CopyBlock>{`dotnet dev-certs https --trust`}</CopyBlock>
 
 ### Port 5001 or 3000 is already in use
 

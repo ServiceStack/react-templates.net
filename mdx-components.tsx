@@ -5,6 +5,8 @@ import { Tip } from '@/components/tip';
 import { YouTube } from '@/components/youtube';
 import { ReactTemplates, ReactTemplate } from '@/components/react-template';
 import { ScreenshotsGallery } from '@/components/screenshots-gallery';
+import { CopyBlock } from '@/app/components/copy-block';
+import { Pipeline, PipelineStep } from '@/components/pipeline';
 
 export function getMDXComponents(components?: MDXComponents): MDXComponents {
   return {
@@ -15,6 +17,9 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     ReactTemplate,
     ReactTemplates,
     ScreenshotsGallery,
+    CopyBlock,
+    Pipeline,
+    PipelineStep,
     ...components,
   };
 }

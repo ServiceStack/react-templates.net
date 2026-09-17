@@ -126,9 +126,7 @@ For each plan, choose:
 
 After editing seed plans during template development, recreate local state:
 
-```bash
-ASPNETCORE_ENVIRONMENT=Development ./scripts/reset-dev.sh --yes
-```
+<CopyBlock>{`ASPNETCORE_ENVIRONMENT=Development ./scripts/reset-dev.sh --yes`}</CopyBlock>
 
 After launch, manage plan changes from the **Plans** tab at `/admin/plans`. Publishing creates a new immutable version; existing subscriptions remain pinned until a deliberate migration or customer plan change.
 
@@ -146,8 +144,6 @@ Either keep it as a working example or replace it consistently. Do not remove a 
 
 ## 7. Verify the rebrand
 
-```bash
-./scripts/verify.sh
-```
+<CopyBlock>{`./scripts/verify.sh`}</CopyBlock>
 
 Then manually check responsive public, authenticated, Identity, and admin pages. Confirm emails, download filenames, audit language, Stripe product names, and browser metadata use the intended brand.

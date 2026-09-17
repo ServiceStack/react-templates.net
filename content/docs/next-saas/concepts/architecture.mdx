@@ -97,17 +97,23 @@ An architecture test rejects unclassified tables. This makes ownership explicit 
 
 C# DTOs in `MyApp.ServiceModel` are authoritative. ServiceStack generates `MyApp.Client/lib/dtos.ts`, which the React client calls through a shared `JsonServiceClient`.
 
-```text
-C# request/response DTO
-        ↓
-Service implementation
-        ↓
-ServiceStack metadata/OpenAPI
-        ↓
-generated TypeScript DTO
-        ↓
-React page or component
-```
+<Pipeline>
+  <PipelineStep title="C# Request/Response DTO" code>
+    Authored in `MyApp.ServiceModel`.
+  </PipelineStep>
+  <PipelineStep title="Service implementation">
+    Handles the request in `MyApp.ServiceInterface`.
+  </PipelineStep>
+  <PipelineStep title="ServiceStack metadata/OpenAPI">
+    Describes the contract from the registered types.
+  </PipelineStep>
+  <PipelineStep title="Generated TypeScript DTO" code>
+    Emitted to `MyApp.Client/lib/dtos.ts`.
+  </PipelineStep>
+  <PipelineStep title="React page or component">
+    Calls the API through the shared `JsonServiceClient`.
+  </PipelineStep>
+</Pipeline>
 
 Regenerate after a contract change; never maintain parallel handwritten browser types.
 

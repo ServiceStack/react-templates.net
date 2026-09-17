@@ -18,8 +18,8 @@ defaults to `sqlite`.
 | Layer | `sqlite` | `postgres` | `mysql` | `sqlserver` |
 | --- | --- | --- | --- | --- |
 | Kamal overlay | `deploy.sqlite.yml` | `deploy.postgres.yml` | `deploy.mysql.yml` | `deploy.sqlserver.yml` |
-| Kamal secrets | `.kamal/secrets.sqlite` | `.kamal/secrets.postgres` | `.kamal/secrets.mysql` | `.kamal/secrets.sqlserver` |
-| Pre-deploy hook | none | `config/db/postgres/pre-deploy.sh` | `config/db/mysql/pre-deploy.sh` | `config/db/sqlserver/pre-deploy.sh` |
+| `.kamal` secrets | `secrets.sqlite` | `secrets.postgres` | `secrets.mysql` | `secrets.sqlserver` |
+| Pre-deploy hook (config/db) | none | `postgres/pre-deploy.sh` | `mysql/pre-deploy.sh` | `sqlserver/pre-deploy.sh` |
 | Accessory image | none | `postgres:18-alpine` | `mysql:8.4` | `mssql/server:2022-latest` |
 | Database and app login | n/a | `init.sh` initializer | image environment variables | `pre-deploy.sh` via `sqlcmd` |
 | Production JSON profile | `…sqlite…` | `…postgres…` | `…mysql…` | `…sqlserver…` |
@@ -31,9 +31,14 @@ Two provider-specific constraints are worth knowing before choosing SQL Server:
 
 - **It enforces a password policy** — at least eight characters drawn from three of uppercase,
   lowercase, digits, and symbols. A hex password satisfies only two categories and the container
-  refuses to start, so `configure-deployment.sh` rejects it first. Generate one with
-  `openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c 40`. It also needs roughly 2GB of memory,
-  which rules out the smallest hosts.
+  refuses to start, so `configure-deployment.sh` rejects it first. Generate one with:
+
+<CopyBlock>
+openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c 40
+</CopyBlock>
+  
+It also needs roughly 2GB of memory, which rules out the smallest hosts.
+
 - **It runs no initializer scripts**, unlike the PostgreSQL and MySQL images. Its pre-deploy hook
   waits for the server to accept connections and then applies an idempotent `init.sql` through
   `sqlcmd`, and creates the data directory owned by uid 10001 because the image cannot write to a

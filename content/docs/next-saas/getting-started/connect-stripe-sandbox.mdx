@@ -44,9 +44,7 @@ Automatic catalog provisioning is enabled for sandbox keys by default. Live prov
 
 Install Stripe CLI using Stripe’s instructions, then authenticate:
 
-```bash
-stripe login
-```
+<CopyBlock>{`stripe login`}</CopyBlock>
 
 Run a listener while testing locally:
 
@@ -59,9 +57,7 @@ stripe listen \
 
 The listener prints a temporary `whsec_...` signing secret. Export it and restart the application:
 
-```bash
-export Stripe__WebhookSecret=whsec_...
-```
+<CopyBlock>{`export Stripe__WebhookSecret=whsec_...`}</CopyBlock>
 
 Keep the listener running during local billing tests. Its secret changes when a new listener session is created.
 
