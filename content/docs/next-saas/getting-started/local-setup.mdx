@@ -3,6 +3,9 @@ title: "Run the template locally"
 description: "This page takes a clean checkout to a working development application and explains how to return to a clean state."
 ---
 
+[Choose your database](/docs/next-saas/getting-started/choose-your-database) comes first: it sets
+`DB_PROVIDER`, which selects the database this page starts and the one your deployment uses.
+
 ## Prerequisites
 
 Install:
@@ -11,9 +14,12 @@ Install:
 - Node.js 24 or a compatible current LTS release;
 - npm;
 - SQLite CLI for the diagnostic and verification scripts;
+- Docker or Podman, when `DB_PROVIDER` is PostgreSQL, MySQL, or SQL Server;
 - Git.
 
-Stripe CLI is optional until the Stripe sandbox step. PostgreSQL is only required for production and the optional integration test.
+Stripe CLI is optional until the Stripe sandbox step. No database client tools are required:
+`scripts/dev-db.sh` runs the database in a container and `./scripts/dev-db.sh shell` opens a
+client inside it.
 
 Confirm the local toolchain from the repository root:
 
@@ -34,6 +40,20 @@ npm install
 ```
 
 NuGet packages are restored automatically by `dotnet build` or `dotnet watch`.
+
+## Start your database
+
+<CopyBlock>{`./scripts/dev-db.sh up`}</CopyBlock>
+
+This runs the provider named by `DB_PROVIDER` in `.env` and writes the local connection back
+into that same private file, which the application applies in Development. The source-controlled
+`MyApp/appsettings.Development.json` stays on its SQLite default. For a server provider it
+uses the same image, database name, unprivileged login, and initializer scripts the deployment
+uses, so the two environments cannot drift. SQLite starts no container and needs no setup.
+
+`./scripts/dev-db.sh status` shows the provider, container state, and connection target at any
+time. [Choose your database](/docs/next-saas/getting-started/choose-your-database) explains the
+full workflow, including configuring the same provider for production.
 
 ## Start the application
 
@@ -76,7 +96,7 @@ Seed users are created only in Development. Production startup never creates kno
 After signing in, verify:
 
 - `/dashboard` loads the active organization once without repeated API calls;
-- `/documents` permits a small supported file upload;
+- `/documents` permits a small supported file upload, and accepts several files at once;
 - `/usage` displays document and storage usage;
 - `/settings` displays organization lifecycle controls for an Owner;
 - `/admin` opens the Operations Center for `admin@email.com`; its side menu links to the focused `/admin/*` routes;
@@ -90,9 +110,9 @@ This template is designed to recreate itself from an empty development database.
 
 <CopyBlock>{`ASPNETCORE_ENVIRONMENT=Development ./scripts/reset-dev.sh --yes`}</CopyBlock>
 
-The script validates exact paths before removing `MyApp/App_Data/app.db` and `MyApp/App_Data/files`. It then runs the migration task. It refuses to run outside Development or without `--yes`.
+The script follows whichever provider is running. On SQLite it validates exact paths before removing `MyApp/App_Data/app.db`; on a server provider it recreates that database's container volume through `scripts/dev-db.sh`. It always removes `MyApp/App_Data/files` and then runs the migration task. It refuses to run outside Development or without `--yes`.
 
-ServiceStack Background Jobs and request logs use separate generated SQLite databases under `MyApp/App_Data/jobs` and `MyApp/App_Data/requests`. They are operational development artifacts and can also be removed while the application is stopped.
+ServiceStack Background Jobs and request logs use separate generated SQLite databases under `MyApp/App_Data/jobs` and `MyApp/App_Data/requests`, whichever provider holds application data. They are operational diagnostics rather than billing or enforcement records, they are development artifacts here, and they can also be removed while the application is stopped.
 
 ## Common setup problems
 
@@ -109,6 +129,10 @@ Stop the previous `dotnet watch`, `dotnet run`, or Next.js development process b
 ### The schema does not match the code
 
 During template development, recreate the local database with `reset-dev.sh`. Derived production applications should add a forward migration instead.
+
+### The application will not connect to the database
+
+`./scripts/doctor.sh` reports the effective local provider and warns when it disagrees with `DB_PROVIDER`, and `./scripts/dev-db.sh status` shows whether the local database is running. [Choose your database](/docs/next-saas/getting-started/choose-your-database#troubleshooting) lists the specific startup errors and their causes.
 
 ### Paid checkout is unavailable
 

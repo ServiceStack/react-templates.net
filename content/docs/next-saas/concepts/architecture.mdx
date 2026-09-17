@@ -83,7 +83,7 @@ Replace implementations during host composition instead of coupling feature serv
 
 ## Persistence model
 
-The application uses EF Core for ASP.NET Core Identity and OrmLite for SaaS records. Both point to the same configured database. SQLite supports local development and deterministic verification; PostgreSQL is the default production policy.
+The application uses EF Core for ASP.NET Core Identity and OrmLite for SaaS records. Both point to the same configured database. `DB_PROVIDER` selects that provider for local development and production together, so the engine you develop against is the one you deploy; SQLite remains the zero-dependency default and the basis of deterministic verification, while the default production policy requires a networked database server.
 
 Every OrmLite table is classified in `features.json`:
 

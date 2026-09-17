@@ -3,6 +3,7 @@
     "icon": "Rocket",
     "pages": [
         "overview",
+        "choose-your-database",
         "local-setup",
         "project-tour",
         "customize-the-product",

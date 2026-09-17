@@ -14,7 +14,14 @@ description: "The Acme sample stores ordinary files to demonstrate feature gates
 | Download | `GET /saas/files/{Id}` |
 | Delete | `DELETE /saas/files/{Id}` |
 
-Upload, download, and delete require the `files.basic` entitlement. Every lookup is constrained to the active organization. Upload is multipart and requires an `IdempotencyKey`.
+Upload, download, and delete require the `files.basic` entitlement. Every lookup is constrained to the active organization. Upload is multipart, carries one file, and requires an `IdempotencyKey`.
+
+`/documents` accepts a multiple-file selection and files dropped onto the list, and sends one
+request per file, each with its own idempotency key. Keeping one file per request keeps one
+upload equal to one reservation and one quota decision, so a file rejected for quota, size, or
+type leaves the files around it stored; the page reports each rejection with the reason the API
+returned. Prefer that over a batch endpoint, which would need partial-success semantics for a
+hard limit meant to reject exactly one operation.
 
 ![Documents and File Storage Management](/img/next-saas/documents-manager.png)
 

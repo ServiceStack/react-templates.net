@@ -55,7 +55,7 @@ For a complete local reset:
 
 <CopyBlock>{`ASPNETCORE_ENVIRONMENT=Development ./scripts/reset-dev.sh --yes`}</CopyBlock>
 
-This deletes the local SQLite database and local file store, then recreates users, roles, plans, and product tables. It is intentionally guarded and destructive.
+This discards the local database — the SQLite file, or the container volume of whichever server provider `DB_PROVIDER` selects — and the local file store, then recreates users, roles, plans, and product tables. It is intentionally guarded and destructive.
 
 ## Data and seed rules
 

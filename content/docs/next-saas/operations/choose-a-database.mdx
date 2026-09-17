@@ -1,9 +1,12 @@
 ---
 title: "Choose a database"
-description: "SQLite is the default. Switching to PostgreSQL or another RDBMS is a one-variable configuration change, not a pipeline fork."
+description: "SQLite is the default. Switching to PostgreSQL or another RDBMS is a one-variable configuration change that applies to local development and production alike, not a pipeline fork."
 ---
 
-[Operations](/docs/next-saas/operations) · [Database and storage](/docs/next-saas/operations/database-and-storage) · [Deployment](/docs/next-saas/operations/deployment)
+[Operations](/docs/next-saas/operations) · [Choose your database](/docs/next-saas/getting-started/choose-your-database) · [Database and storage](/docs/next-saas/operations/database-and-storage) · [Deployment](/docs/next-saas/operations/deployment)
+
+[Choose your database](/docs/next-saas/getting-started/choose-your-database) is the step-by-step
+guide for a developer setting the template up. This page is the operator reference behind it.
 
 ## The switch
 
@@ -15,6 +18,12 @@ Only the deployment layer differs between providers, and it is selected with a
 [Kamal destination](https://kamal-deploy.org): the `DB_PROVIDER` repository variable, which
 defaults to `sqlite`.
 
+The same variable selects the local database. `./scripts/dev-db.sh up` reads `DB_PROVIDER` from
+`.env` and runs that provider from the accessory's own image, with the same `next_saas` database,
+the same unprivileged login, and the same initializer scripts, writing the connection into the
+private `.env` that Development startup applies over the source-controlled settings. Development therefore
+happens on the engine that ships, and `./scripts/doctor.sh` warns when the two disagree.
+
 | Layer | `sqlite` | `postgres` | `mysql` | `sqlserver` |
 | --- | --- | --- | --- | --- |
 | Kamal overlay | `deploy.sqlite.yml` | `deploy.postgres.yml` | `deploy.mysql.yml` | `deploy.sqlserver.yml` |
@@ -23,6 +32,7 @@ defaults to `sqlite`.
 | Accessory image | none | `postgres:18-alpine` | `mysql:8.4` | `mssql/server:2022-latest` |
 | Database and app login | n/a | `init.sh` initializer | image environment variables | `pre-deploy.sh` via `sqlcmd` |
 | Production JSON profile | `…sqlite…` | `…postgres…` | `…mysql…` | `…sqlserver…` |
+| Local database | none needed | `./scripts/dev-db.sh up` | same | same |
 
 Every server provider takes the same single `DB_PASSWORD` and connects as an unprivileged login
 that owns only its own database, never as the cluster administrator.
@@ -123,10 +133,13 @@ MySQL and SQL Server ship with the template. Adding a further RDBMS, or a manage
 2. add `config/deploy.<provider>.yml` and `.kamal/secrets.<provider>`;
 3. add `config/db/<provider>/pre-deploy.sh` if an accessory must be booted;
 4. add `config/appsettings.deploy.<provider>.example.json` and a branch in `scripts/configure-deployment.sh`;
-5. set the `DB_PROVIDER` repository variable to the new name.
+5. add its image, connection string, readiness probe, and client shell to `scripts/dev-db.sh`, so it also runs locally;
+6. set the `DB_PROVIDER` repository variable to the new name.
 
 For a managed database hosted elsewhere, steps 2 and 3 collapse to an overlay declaring no
-accessory. Only the connection string in the production JSON changes.
+accessory, and only the connection string in the production JSON changes. Step 5 then reduces to
+setting `DEV_DB_ENGINE` to the engine that database actually runs, so `./scripts/dev-db.sh up`
+still provides the same engine locally.
 
 ## Constraints worth knowing
 
@@ -165,6 +178,7 @@ label, so an exact `label=service=<service>` filter still matches every scope.
 
 ## Related documentation
 
+- [Choose your database](/docs/next-saas/getting-started/choose-your-database)
 - [Database and storage](/docs/next-saas/operations/database-and-storage)
 - [Setup PostgreSQL](/docs/next-saas/operations/setup-postgresql)
 - [Deployment](/docs/next-saas/operations/deployment)

@@ -18,7 +18,14 @@ export Stripe__PublishableKey=pk_test_...
 export Stripe__SecretKey=sk_test_...
 ```
 
-Alternatively, copy `.env.example` to a private environment file that is excluded from version control and load it before starting the application.
+Alternatively, put them in the gitignored `.env` beside the solution, which the application applies automatically in Development:
+
+```bash
+Stripe__PublishableKey=pk_test_...
+Stripe__SecretKey=sk_test_...
+```
+
+A variable already set in your shell still wins over the file. See [Configuration](/docs/next-saas/operations/configuration#the-private-env-in-development).
 
 Restart the backend after changing configuration. The admin Operations Center should report Stripe as ready.
 

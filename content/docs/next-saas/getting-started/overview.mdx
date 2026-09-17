@@ -27,7 +27,7 @@ description: "Next SaaS provides the generic foundation that most self-service B
 | Runtime | .NET 10 and ASP.NET Core | Hosting, Identity, configuration, and middleware |
 | APIs | ServiceStack | Typed services, validation, API keys, OpenAPI, Admin UI, and jobs |
 | Data | OrmLite and EF Core Identity | SaaS records and user identity |
-| Database | SQLite locally; PostgreSQL in production | Persistent enforcement and customer state |
+| Database | Your choice of SQLite, PostgreSQL, MySQL, or SQL Server — the same one locally and in production | Persistent enforcement and customer state |
 | Billing | Stripe Billing | Checkout, subscriptions, invoices, trials, and discounts |
 | Frontend | React 19, Next.js 16, TypeScript | Customer, marketing, and operator experiences |
 | Styling | Tailwind CSS | Shared responsive visual system |
@@ -71,13 +71,14 @@ This separation keeps global policy reviewable while allowing safe runtime admin
 
 ## What you should customize first
 
-Most adopters should change these areas first:
-
-1. Product identity and public content.
-2. Features and quota meters.
-3. Default plan catalog.
-4. The example document module.
-5. Stripe sandbox configuration.
-6. Production database, email, domains, secrets, and retention policy.
+1. **The database provider.** One variable, `DB_PROVIDER`, selects the database you run locally
+   and the one that deploys, so choose it before you create data you care about.
+   [Choose your database](/docs/next-saas/getting-started/choose-your-database) is the next page.
+2. Product identity and public content.
+3. Features and quota meters.
+4. Default plan catalog.
+5. The example document module.
+6. Stripe sandbox configuration.
+7. Email, domains, secrets, and retention policy for production.
 
 The rest of this onboarding path walks through that sequence.

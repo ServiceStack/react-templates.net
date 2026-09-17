@@ -7,9 +7,9 @@ description: "The RDBMS is authoritative for Identity and SaaS metadata. IFileSt
 
 ## Database providers
 
-SQLite is the frictionless local default and allows the whole template to recreate from an empty file. It is also supported for a first single-host deployment check when the durable `App_Data` volume is mounted. The default production policy, `Deployment.RequireNetworkDatabase`, requires a networked database server.
+SQLite is the frictionless default and allows the whole template to recreate from an empty file. It is also supported for a first single-host deployment check when the durable `App_Data` volume is mounted. The default production policy, `Deployment.RequireNetworkDatabase`, requires a networked database server.
 
-Deployment selects the provider with one repository variable rather than a code change. [Choose a database](/docs/next-saas/operations/choose-a-database) covers the switch, its Kamal destination layout, and how to add another RDBMS.
+One variable, `DB_PROVIDER`, selects the provider rather than a code change, and it selects it in both environments: the Kamal destination that deploys, and the database `./scripts/dev-db.sh up` runs on a developer's machine from the same image and initializer scripts. Development therefore happens on the engine that ships. [Choose your database](/docs/next-saas/getting-started/choose-your-database) is the developer walkthrough; [Choose a database](/docs/next-saas/operations/choose-a-database) covers the Kamal destination layout and how to add another RDBMS.
 
 `Configure.Db.cs` gives EF Core Identity and OrmLite product data the same connection. Keep their ownership separate even though they share the database:
 
