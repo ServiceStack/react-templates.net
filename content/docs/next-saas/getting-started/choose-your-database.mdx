@@ -166,8 +166,8 @@ After the release, `https://your-domain/ready` reports database and file-store r
 mechanics, and [Setup PostgreSQL](/docs/next-saas/operations/setup-postgresql) is the full
 runbook for replacing an existing deployment.
 
-With `Database:AutoMigrateEmpty` false — the default for every server provider — apply migrations
-as a deliberate release step before starting multiple instances:
+An empty database bootstraps itself on first start. Apply later migrations as a deliberate
+release step, before starting multiple instances:
 
 ```bash
 cd MyApp

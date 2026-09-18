@@ -49,7 +49,7 @@ npm run revert:last
 npm run rerun:last
 ```
 
-An empty database also bootstraps automatically when `Database.AutoMigrateEmpty` is enabled.
+An empty database also bootstraps itself on first start, in every environment, because an application whose schema does not exist can only fail. Migrating a populated database stays a deliberate release step.
 
 For a complete local reset:
 

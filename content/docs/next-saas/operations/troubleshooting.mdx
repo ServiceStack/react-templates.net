@@ -24,7 +24,7 @@ This removes the documented local database and file store. Never use it against 
 
 ### Application will not start in Production
 
-Read the aggregated `ProductionReadiness` errors. Common causes are localhost/example base URL, wildcard hosts, SQLite without `Deployment.RequireNetworkDatabase=false`, automatic migration without `Deployment.RequireExplicitMigrations=false`, Development/Disabled email, placeholder support address, missing Stripe/webhook values, or test keys without explicit staging allowance.
+Read the aggregated `ProductionReadiness` errors. Common causes are localhost/example base URL, wildcard hosts, SQLite without `Deployment.RequireNetworkDatabase=false`, Development/Disabled email, placeholder support address, missing Stripe/webhook values, or test keys without explicit staging allowance.
 
 Run `./scripts/preflight.sh --config-only` with the same environment as the deployment.
 

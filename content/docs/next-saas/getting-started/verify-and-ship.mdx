@@ -39,7 +39,6 @@ The default production policy expects:
 - an HTTPS public origin;
 - a restricted `AllowedHosts` value;
 - PostgreSQL with an explicit connection string;
-- explicit migrations rather than startup migration;
 - SMTP for invitations and account recovery;
 - Stripe publishable, secret, and webhook keys;
 - live Stripe keys unless test mode is explicitly allowed for staging;
@@ -69,7 +68,6 @@ AppConfig__BaseUrl=https://saas.your-domain.com
 AllowedHosts=saas.your-domain.com
 ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
 Database__Provider=PostgreSql
-Database__AutoMigrateEmpty=false
 Notifications__Provider=Smtp
 Product__SupportEmail=support@your-domain.com
 ```
@@ -99,11 +97,11 @@ To validate environment configuration only when CI has already built the exact r
 
 <CopyBlock>{`./scripts/preflight.sh --config-only`}</CopyBlock>
 
-The checked-in SQLite profile deliberately relaxes only PostgreSQL, explicit-migration, SMTP, and Stripe requirements and reports warnings. Do not broadly disable checks outside an intentional deployment profile.
+The checked-in SQLite profile deliberately relaxes only the networked-database, SMTP, and Stripe requirements and reports warnings. Do not broadly disable checks outside an intentional deployment profile.
 
 ## 6. Apply migrations explicitly
 
-With `Database.AutoMigrateEmpty=false`, apply migrations as a release step before starting multiple application instances:
+An empty database bootstraps itself on first start. Later migrations are a release step, applied before starting multiple application instances:
 
 ```bash
 cd MyApp

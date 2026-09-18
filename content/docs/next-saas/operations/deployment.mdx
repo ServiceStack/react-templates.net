@@ -69,7 +69,7 @@ The PostgreSQL profile uses the same commands; only the source template changes.
   "AppConfig": { "BaseUrl": "https://your-host" },
   "ASPNETCORE_FORWARDEDHEADERS_ENABLED": true,
   "AllowedHosts": "your-host",
-  "Database": { "Provider": "PostgreSql", "AutoMigrateEmpty": false },
+  "Database": { "Provider": "PostgreSql" },
   "ConnectionStrings": { "DefaultConnection": "Host=...;Database=...;Username=...;Password=..." },
   "Notifications": { "Provider": "Smtp", "FromName": "Acme", "FromEmail": "noreply@your-host" },
   "SmtpConfig": { "Host": "...", "Port": 587, "UserName": "...", "Password": "...", "FromEmail": "noreply@your-host" },
@@ -92,15 +92,13 @@ For this explicit temporary mode, override the production defaults:
 ```json
 {
   "Database": {
-    "Provider": "Sqlite",
-    "AutoMigrateEmpty": true
+    "Provider": "Sqlite"
   },
   "ConnectionStrings": {
     "DefaultConnection": "Data Source=App_Data/app.db;Cache=Shared"
   },
   "Deployment": {
-    "RequireNetworkDatabase": false,
-    "RequireExplicitMigrations": false
+    "RequireNetworkDatabase": false
   }
 }
 ```
@@ -124,11 +122,11 @@ set +a
 ./scripts/preflight.sh
 ```
 
-Use `--config-only` only when the exact revision's build suite already passed in CI. Preflight applies the same `Deployment` policy switches as application startup. The PostgreSQL profile enforces the full production boundary; the SQLite profile deliberately relaxes database, migration, SMTP, and Stripe requirements and reports those choices as warnings.
+Use `--config-only` only when the exact revision's build suite already passed in CI. Preflight applies the same `Deployment` policy switches as application startup. The PostgreSQL profile enforces the full production boundary; the SQLite profile deliberately relaxes the database, SMTP, and Stripe requirements and reports those choices as warnings.
 
 ## Migration ordering
 
-With `Database.AutoMigrateEmpty=false`, execute:
+An empty database bootstraps itself on first start. Apply later migrations before the new revision serves traffic:
 
 ```bash
 cd MyApp

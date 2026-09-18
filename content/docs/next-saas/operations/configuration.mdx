@@ -42,7 +42,6 @@ Nested JSON keys use `__`:
 ```bash
 AppConfig__BaseUrl=https://saas.example.com
 Database__Provider=PostgreSql
-Database__AutoMigrateEmpty=false
 ConnectionStrings__DefaultConnection='Host=db;Database=acme;Username=acme;Password=...'
 Notifications__Provider=Smtp
 Stripe__SecretKey=sk_live_...
@@ -66,9 +65,9 @@ commented out for that reason.
 
 ## Production policy
 
-`Deployment.EnforceStartupChecks` runs `ProductionReadiness` before traffic is served. Defaults require HTTPS, restricted hosts, a networked database server rather than SQLite, SMTP, Stripe with verified webhooks, non-test Stripe keys, and explicit migrations.
+`Deployment.EnforceStartupChecks` runs `ProductionReadiness` before traffic is served. Defaults require HTTPS, restricted hosts, a networked database server rather than SQLite, SMTP, Stripe with verified webhooks, and non-test Stripe keys.
 
-Relax an individual `Deployment` requirement only when the product genuinely does not need it or for a deliberate single-host validation—for example SQLite before a database server, or a free-only internal service. `preflight.sh` honors the same `Deployment.RequireNetworkDatabase`, `RequireExplicitMigrations`, `RequireSmtp`, `RequireStripe`, and `RequireStripeWebhook` switches as runtime startup validation and emits warnings for reduced modes. Treat every override as a recorded architecture decision, not a way around preflight.
+Relax an individual `Deployment` requirement only when the product genuinely does not need it or for a deliberate single-host validation—for example SQLite before a database server, or a free-only internal service. `preflight.sh` honors the same `Deployment.RequireNetworkDatabase`, `RequireSmtp`, `RequireStripe`, and `RequireStripeWebhook` switches as runtime startup validation and emits warnings for reduced modes. Treat every override as a recorded architecture decision, not a way around preflight.
 
 ## Validate
 

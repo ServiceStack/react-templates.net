@@ -127,10 +127,8 @@ The script preserves the other JSON settings and sets:
 
 ```text
 Database.Provider=PostgreSql
-Database.AutoMigrateEmpty=false
 ConnectionStrings.DefaultConnection=Host=next-saas-postgres;Port=5432;Database=next_saas;Username=next_saas;Password=...;SSL Mode=Disable
 Deployment.RequireNetworkDatabase=true
-Deployment.RequireExplicitMigrations=true
 ```
 
 It also sets the `DB_PROVIDER` repository variable to `postgres`, which is what makes the next release select this destination.
