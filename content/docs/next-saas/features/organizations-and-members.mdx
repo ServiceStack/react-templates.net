@@ -7,10 +7,13 @@ description: "Organizations isolate customer data, subscriptions, quotas, files,
 
 ## User behavior
 
-- Registration or first SaaS access creates a personal organization when enabled.
+- Registration offers Personal and Business. Personal creates a private, single-member workspace; Business requires an organization name and starts with an owner membership. The internal account kind for Personal is `Individual`.
+- First SaaS access can still provision an Individual workspace when personal workspaces are enabled.
 - Users can create another organization with independent data and billing.
 - The application shell switches the active organization explicitly.
 - Owners and Admins invite members and manage non-owner roles.
+- Personal accounts cannot invite or accept team members; create a Business organization to collaborate.
+- New Business organizations start on shared Free with one seat; a multi-seat Business plan is needed before inviting teammates.
 - Billing members manage subscription state.
 - Ownership transfer is an explicit lifecycle operation.
 
@@ -48,7 +51,7 @@ Invitations bind a role and normalized email to a random, one-way-hashed token a
 
 ## Configuration
 
-- `Saas.EnablePersonalWorkspaces` — provision a personal organization when appropriate.
+- `Saas.EnablePersonalWorkspaces` — provision an Individual workspace when appropriate.
 - `Saas.DefaultPlan` — initial published plan code.
 - `Saas.InvitationExpiryDays` — invitation lifetime.
 - `Product` — deployment-wide brand/contact information, not customer profile data.

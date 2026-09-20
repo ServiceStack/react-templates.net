@@ -35,11 +35,10 @@ Sign in as `admin@email.com`, open the **Plans** tab at `/admin/plans`, and repe
 
 1. Select the plan.
 2. Open its pricing configuration.
-3. Create or edit a draft.
-4. Confirm monthly and annual amounts and currencies.
-5. Click **Create missing in Stripe**.
-6. Review the returned `price_...` mappings.
-7. Publish the draft. The mappings are saved automatically, so no second draft save is required.
+3. Confirm monthly and annual amounts and currencies, editing them if needed.
+4. Click **Create missing in Stripe**. This saves a draft automatically when needed, then provisions the Stripe catalog.
+5. Review the returned `price_...` mappings.
+6. Publish the draft. The mappings are saved automatically, so no second draft save is required.
 
 Free and contact-sales plans are skipped. Published subscriptions remain pinned to their existing plan version; publishing a new draft does not silently rewrite customer contracts.
 

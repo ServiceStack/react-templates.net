@@ -11,7 +11,7 @@ Only platform Admin users manage the catalog from the **Plans** tab at `/admin/p
 
 1. Select a durable `SaasPlan`.
 2. Edit or create its draft `SaasPlanVersion`.
-3. Configure public visibility, description, order, contact-sales behavior, and trial days.
+3. Configure account audience, public visibility, description, order, contact-sales behavior, and trial days.
 4. Add monthly/annual `SaasPlanPrice` rows, feature grants, and quota allowances.
 5. Optionally create missing Products and Prices in Stripe.
 6. Save, review active-subscription impact, and publish.
@@ -30,7 +30,7 @@ Publishing retires the prior published version. Existing subscriptions remain pi
 
 ![Immutable Plan Versions and Historical Pinning](/img/next-saas/plan-versions.png)
 
-`MyApp/plans.json` seeds these records only for an empty database.
+`MyApp/plans.json` seeds these records only for an empty database. The default catalog includes shared Free, Individual-only Personal, and Business-only Pro, Business, and Enterprise plans. Plan audience is part of each published version's contract.
 
 ## APIs
 
@@ -44,11 +44,11 @@ Publishing retires the prior published version. Existing subscriptions remain pi
 
 Amounts are integer minor currency units. Supported currencies are defined globally by `Saas.SupportedCurrencies`; annual billing is globally controlled by `Saas.EnableAnnualBilling`.
 
-A self-service paid Price must be active, positive, published, and mapped to a Stripe `price_...` identifier. Free plans require no Stripe Price. Contact-sales plans intentionally bypass self-service Checkout.
+A self-service paid Price must be active, positive, published, available to the active account kind, and mapped to a Stripe `price_...` identifier. Free plans require no Stripe Price. Contact-sales plans intentionally bypass self-service Checkout. The pricing page offers Personal and Business plan tabs above the cards, with monthly/annual billing alongside; signed-in Checkout remains bound to the active workspace kind.
 
 ![Multi-Currency and Interval Plan Prices](/img/next-saas/plan-prices.png)
 
-Stripe catalog provisioning uses plan metadata and idempotency keys. It saves returned Price mappings directly into the draft but never publishes a plan automatically. Live provisioning requires explicit opt-in.
+**Create missing in Stripe** saves the current plan as a draft when needed, including unsaved edits, before provisioning. Stripe catalog provisioning uses plan metadata and idempotency keys. It saves returned Price mappings directly into the draft but never publishes a plan automatically. Live provisioning requires explicit opt-in.
 
 ## Trials
 

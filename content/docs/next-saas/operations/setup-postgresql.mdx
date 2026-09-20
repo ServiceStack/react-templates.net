@@ -231,7 +231,7 @@ kamal accessory exec postgres --reuse -d postgres \
   "psql --username postgres --dbname next_saas --command='select \"Code\", \"Name\" from \"SaasPlan\" order by \"DisplayOrder\";'"
 ```
 
-The schema must contain the Identity and SaaS tables. The plan query must return Free, Pro, Business, and Enterprise.
+The schema must contain the Identity and SaaS tables. The plan query must return Free, Personal, Pro, Business, and Enterprise.
 
 Verify both public health endpoints:
 
@@ -245,7 +245,7 @@ Both responses must be `Healthy`.
 
 ## 8. Verify clean application and Stripe state
 
-Sign in with the temporary bootstrap administrator. Confirm `/admin`, `/admin/plans`, and the public pricing page load. Create a disposable customer user and confirm a new personal organization is created.
+Sign in with the temporary bootstrap administrator. Confirm `/admin`, `/admin/plans`, and the public pricing page load. Create a disposable Individual customer user and confirm a private workspace is created. Create a Business customer user and confirm a named organization is created.
 
 The new PostgreSQL database must not contain users, organizations, subscriptions, usage records, or Stripe mappings from the retired deployment.
 

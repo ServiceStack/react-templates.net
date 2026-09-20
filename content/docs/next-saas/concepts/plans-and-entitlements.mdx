@@ -18,7 +18,7 @@ BillingSubscription ──pins──> SaasPlanVersion
 CustomerEntitlementOverride ──overrides──> feature or meter key
 ```
 
-`SaasPlan` is the durable product identity and public code. A version is an immutable commercial contract after publication. Prices, features, quotas, and trial days belong to that version.
+`SaasPlan` is the durable product identity and public code. A version is an immutable commercial contract after publication. Prices, features, quotas, trial days, and account audience belong to that version. Audience can be Both, Individual, or Business; Checkout rejects a plan whose audience does not match the active workspace kind.
 
 ## Plan lifecycle
 

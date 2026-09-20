@@ -7,6 +7,8 @@ description: "The UI calls a customer boundary an Organization. Internal DTOs an
 
 ## Organization context
 
+Registration creates either a private Individual workspace or a Business organization. Both use the same internal `Workspace` model and tenant isolation. An Individual workspace has one member and no invitations; a Business organization supports team roles and invitations. A user may later create and switch to a separate Business organization.
+
 `IWorkspaceContextResolver` is the mandatory boundary for tenant-facing services. It starts with an authenticated identity, reloads active membership, and returns the verified `Workspace`, `WorkspaceMember`, user ID, and effective role.
 
 A client-provided organization or resource ID only identifies what the caller wants. Authorization comes from persisted membership and an organization-scoped query.
@@ -72,6 +74,7 @@ Invitations are persisted as pending `WorkspaceMember` records with:
 - expiry and send/revoke dates.
 
 Acceptance requires an authenticated Identity email matching the invitation. Expired, revoked, already active, or mismatched invitations are rejected. A pending invitation may also be promoted on a subsequent authenticated SaaS request after its email is verified.
+Individual workspaces reject invitations, including acceptance of a previously issued token.
 
 ## Tenant-owned queries
 

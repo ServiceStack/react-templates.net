@@ -13,6 +13,7 @@ description: "ASP.NET Core Identity owns users, password credentials, confirmati
 - Registration preserves only local relative return URLs, preventing external redirect targets.
 - Authenticator-app 2FA, recovery codes, password changes, email changes, external-login management, and personal-data pages are included in Razor Identity UI.
 - Development seed accounts are created only when the environment is Development and the Identity store is empty.
+- Registration chooses an Individual account or a Business organization; Business requires an organization name.
 
 `Notifications.Provider=Smtp` is required by the default production policy so confirmation, recovery, and invitations can be delivered. Development's no-op sender exposes confirmation links locally and is not appropriate for real users.
 
@@ -39,9 +40,9 @@ Protect recovery codes like passwords. Regeneration invalidates the prior set. R
 An Identity user and an organization are different objects:
 
 - organization deletion removes customer organization data but intentionally keeps user accounts;
-- the included Identity **Delete personal data** page deletes only `ApplicationUser` through `UserManager`.
+- the included Identity **Delete personal data** page coordinates SaaS access cleanup before removing `ApplicationUser` through `UserManager`.
 
-The template coordinates personal-account deletion with SaaS state. An Owner must transfer or delete every owned organization first. For an eligible account, the server removes memberships and invitations, API keys, notification preferences/history, and active-organization preference, and revokes active support grants before deleting Identity. Shared organization data and historical audit attribution remain.
+An Owner must transfer or delete every owned Business organization first. An eligible sole-owner, free Individual workspace is scheduled for delayed deletion as part of account deletion; paid, held, or shared workspaces must be resolved first. The server removes memberships and invitations, API keys, notification preferences/history, and active-organization preference, and revokes active support grants before deleting Identity. Shared Business organization data and historical audit attribution remain.
 
 ## Verify
 
