@@ -1,0 +1,16 @@
+---
+title: "Add a Pro feature"
+description: "Put new Pro behavior behind the existing license check and ship it with a new build date."
+---
+
+Each build makes one paid-access decision. There are no feature keys to register, feature dates to record or catalogs to sign.
+
+To add a Pro feature:
+
+1. Implement it behind the existing check: `result.Valid` in .NET or `result.valid` in JavaScript. Gate both the UI entry points and the operation itself.
+2. Build the release with its real release date (`-p:AppBuildDate=YYYY-MM-DD` in the sample).
+3. Publish it to GitHub as usual.
+
+Customers whose cutoff is on or after that date get the feature. Customers with an earlier cutoff see that build in Free mode and can renew, or keep using the last version their license covers, where their existing Pro features keep working.
+
+See the [.NET](/docs/next-license/development/dotnet-license-verification) and [Electron](/docs/next-license/development/electron-license-verification) guides and [build coverage](/docs/next-license/concepts/feature-entitlements).

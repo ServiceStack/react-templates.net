@@ -1,0 +1,14 @@
+{
+  "title": "Operations",
+  "icon": "Settings",
+  "pages": [
+    "index",
+    "configuration",
+    "deployment",
+    "background-recovery",
+    "health-and-observability",
+    "backup-and-recovery",
+    "troubleshooting"
+  ],
+  "defaultOpen": false
+}

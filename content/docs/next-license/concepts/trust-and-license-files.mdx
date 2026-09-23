@@ -1,0 +1,52 @@
+---
+title: "Signed JWT license keys"
+description: "Understand signing, readable claims and offline trust."
+---
+
+The complete three-segment JWT is the license key. Its header is `{"alg":"ES256","typ":"JWT"}`. An example payload (illustrative only):
+
+```json
+{
+  "iss": "acme-studio",
+  "aud": "acme-studio",
+  "sub": "13a25819-3ed9-441f-8bcd-6a94ee56dc00",
+  "name": "Alex Morgan",
+  "organization": "Northstar Studio",
+  "seats": 3,
+  "edition": "Pro",
+  "iat": 1780000000,
+  "lifetime": false,
+  "updatesThrough": "2027-03-21"
+}
+```
+
+| Claim | Meaning |
+| --- | --- |
+| `iss` | Issuer, from `Licensing:LicenseIssuer` |
+| `aud` | Product ID, `acme-studio` in the template |
+| `sub` | License ID; stays the same across renewals and reissues |
+| `name`, `organization`, `seats` | Registered details shown by the app |
+| `edition` | `Pro` or `Enterprise` |
+| `iat` | Issue time, for display and audit only; not an expiry |
+| `lifetime`, `updatesThrough` | Build coverage; Lifetime has `lifetime: true` and no `updatesThrough` |
+| `refreshKey` | Optional key for [refresh](/docs/next-license/features/offline-and-refresh); ignored by verification |
+
+There is intentionally no `exp` or `nbf`: coverage depends on the app's release date, not today's date.
+
+## Verifying correctly
+
+Never just decode the payload and trust `edition`. Verify the signature with the bundled public key, pin ES256, check issuer and product, then check [build coverage](/docs/next-license/concepts/feature-entitlements). Registered details should only be shown after verification.
+
+A valid signature means your server issued the license, including complimentary ones. It is not a live payment check.
+
+## Signed, not encrypted
+
+Anyone holding the key can read its claims; that's what lets the app display registered details. JWE encryption would not help: anyone with a recipient public key can encrypt to it, so encryption doesn't prove who issued a license, and the app would need a decryption secret. A JWS signature proves origin with a public key alone. See [RFC 7515 (JWS)](https://www.rfc-editor.org/rfc/rfc7515.html) and [RFC 7516 (JWE)](https://www.rfc-editor.org/rfc/rfc7516.html).
+
+## What seats mean
+
+Seats record purchased coverage. The app displays the count; it does not count running machines or enforce concurrent use.
+
+## Limits
+
+Apps contain only the public key. Don't use HS256 or shared secrets, and never ship the private key. A determined user can patch their own copy of your app: this system gives a clear, verifiable eligibility signal rather than DRM.

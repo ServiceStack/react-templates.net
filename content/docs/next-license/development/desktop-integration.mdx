@@ -1,0 +1,41 @@
+---
+title: "Application integration"
+description: "A public key, a release date and a saved JWT are all you need."
+---
+
+The complete integration is:
+
+1. Load the saved key, or accept a pasted or imported one.
+2. Verify it locally with the [.NET](/docs/next-license/development/dotnet-license-verification) or [Electron](/docs/next-license/development/electron-license-verification) verifier.
+3. Enable Pro if it's covered, and show the registered name, organization and seats.
+4. Save the key in user-local storage.
+
+The key is signed but readable. OS-protected storage is optional; it protects privacy, not validity.
+
+## Renewal
+
+When a customer renews, they copy or download the updated key from their account and import it again. No network code is required.
+
+## Optional refresh
+
+`ActivationClient` in `MyApp.Licensing` can fetch the current key from [`/licensing/refresh`](/docs/next-license/features/offline-and-refresh), so renewals arrive without re-importing:
+
+```csharp
+var client = new ActivationClient(http, new Uri("https://licenses.example.com"),
+    publicKeyPem, issuer: "acme-studio", product: "acme-studio", store);
+await client.Refresh(currentKey, enabled: userOptedIn, version, os, arch);
+```
+
+It is deliberately conservative:
+
+- It does nothing unless `enabled` is true and the server URL uses HTTPS.
+- It attempts at most once a day and times out after three seconds.
+- It sends the `refreshKey` from the current license, never the whole file.
+- It saves the response only if it verifies with your public key, issuer and product, has the same license ID, and is not older than the current key.
+- Any failure (network, storage or verification) leaves the current key and Pro state unchanged.
+
+`store` is an `IActivationStore` holding the saved key and last attempt time; `EncryptedActivationStore` is provided. The client also sends a random installation ID, app version, OS and architecture. The server's refresh API doesn't accept or store those fields, so you can drop them from your copy.
+
+## Installers and updates
+
+Downloading and installing new versions is separate from licensing. Use your platform's normal packaging and updater tools, and publish builds to GitHub for the website to [list them](/docs/next-license/features/releases-and-downloads).

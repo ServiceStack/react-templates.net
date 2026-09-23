@@ -1,0 +1,55 @@
+---
+title: "Deployment and storage"
+description: "Deploy with Kamal to SQLite, PostgreSQL, MySQL or SQL Server, with durable state and tested provider configuration."
+---
+
+In production, ASP.NET Core serves the Next.js static export directly; no Node.js server runs. To build manually:
+
+```bash
+cd MyApp.Client
+npm ci
+npm run build
+cd ..
+dotnet publish MyApp/MyApp.csproj -c Release
+```
+
+## Kamal destinations
+
+The template includes GitHub Actions workflows and a [Kamal](https://kamal-deploy.org) destination for each database:
+
+| Destination | Database | Accessory |
+| --- | --- | --- |
+| `sqlite` | SQLite file in `App_Data` | None |
+| `postgres` | PostgreSQL | `postgres:18-alpine` |
+| `mysql` | MySQL-compatible | `mysql:8.4` |
+| `sqlserver` | SQL Server | SQL Server 2022 (Express by default) |
+
+`config/deploy.yml` is shared, and `config/deploy.<destination>.yml` adds a private database accessory with no published ports and sets `Database__Provider`.
+
+To deploy:
+
+1. Set the repository variable `DB_PROVIDER` to `sqlite`, `postgres`, `mysql` or `sqlserver` (default `sqlite`).
+2. For a server database, set the `DB_PASSWORD` secret. SQL Server requires a password that meets its complexity policy.
+3. Copy `config/appsettings.deploy.<provider>.example.json` to a private file, set the database hostname and password, and add your JWT, Stripe, SMTP and public URL settings. Save it as the `APPSETTINGS_JSON` secret. Don't commit the populated file.
+4. Provide the JWT private key, either as `Licensing:LicensePrivateKeyPem` in that JSON, or as a file in the persistent `App_Data/license-keys` directory readable by the container user (UID 1654).
+5. Set the `KAMAL_DEPLOY_HOST`, `KAMAL_DEPLOY_IP` and `SSH_PRIVATE_KEY` secrets (the workflow uses `GITHUB_TOKEN` for the container registry), then run the **Release** workflow. It provisions the accessory, deploys, and runs migrations.
+
+For a manual deployment, run `kamal server bootstrap -d <provider>`, then `config/db/<provider>/pre-deploy.sh` if it exists, then `kamal deploy -d <provider>`. `kamal config -d <provider>` validates a destination without deploying. The template repository's `config/README.md` covers SQL Server editions, TLS and managed databases.
+
+Changing provider selects a new, empty database; it doesn't move existing customers or orders.
+
+## Durable state
+
+Persist `App_Data` even with a server database. It holds ASP.NET data-protection keys, background job and request-log databases, the GitHub release cache, and (with SQLite) the application database. Back up the JWT private key and short-key salt separately and securely.
+
+## One instance
+
+Background workers and email delivery assume a single application instance. Running more than one needs coordinated job claims and email idempotency, not just a second container.
+
+## Public origin
+
+Terminate HTTPS at your proxy and configure forwarded headers so the app sees the real origin. Set `Stripe:BaseUrl` to that HTTPS origin. Cookie-authenticated changes require a same-origin `Origin` or `Referer`, so confirm they work on the public domain.
+
+## Before accepting payments
+
+Verify signing, Stripe mode and webhook delivery, SMTP, GitHub downloads, a backup restore, and a real purchase through to unlocking Pro. Monitor `/up` and `/ready` separately. See the [production checklist](/docs/next-license/security/production-checklist).

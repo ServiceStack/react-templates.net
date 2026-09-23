@@ -1,0 +1,24 @@
+---
+title: "Background jobs and recovery"
+description: "Understand retry cadence and where operators investigate interrupted work."
+---
+
+| Worker | Cadence and behavior |
+| --- | --- |
+| Stripe inbox recovery | Every 5 minutes, requeues unprocessed events older than 5 minutes; stops after 20 attempts per event |
+| Checkout reconciliation | Every 10 minutes when Stripe is configured; checks orders pending over 10 minutes against Stripe |
+| Lifecycle email | Every 5 minutes; retries after at least 15 minutes; stops after 10 attempts |
+
+Inbox recovery covers a crash between accepting a webhook and queueing its processing. Checkout reconciliation covers webhooks that never arrive: it reads the Checkout Session from Stripe and fulfills verified payments exactly as a webhook would. It processes the oldest orders first and rotates through them, so one bad order can't block the rest. An order that fails reconciliation is flagged for review.
+
+Customers can also trigger reconciliation for their own order by returning from Checkout or choosing **Check payment status**.
+
+## Investigate before retrying
+
+- **Orders needing review** appear on the Operations overview and in **Orders**. Compare the order with its Stripe payment before acting.
+- **Pending Stripe events** are counted on the overview. Once the cause is fixed, requeue an event with the `RetryLicenseStripeEvent` API. Stored errors are generic by design; use the Stripe Dashboard's event details.
+- **Missing fulfillment** is repaired from the existing event, session and order. Never ask the customer to purchase again.
+- **Uncertain refunds** must reuse the original `RequestId`. Don't create a new refund request until you know what Stripe did.
+- **Email** is at-least-once. Check a message's attempt count and sent time before resending manually.
+
+Background jobs, request logs and the database can be inspected in `/admin-ui`. Never log raw webhook bodies, license keys or provider credentials while investigating.

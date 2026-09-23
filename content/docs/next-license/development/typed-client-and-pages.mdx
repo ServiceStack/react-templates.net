@@ -1,0 +1,42 @@
+---
+title: "Typed clients and static pages"
+description: "Add ServiceStack-powered screens without introducing a second production runtime."
+---
+
+## Add an API
+
+Define request and response DTOs in `MyApp.ServiceModel` and implement them in `MyApp.ServiceInterface`. Declare the response with `IReturn<T>` or `IReturnVoid`, use `IGet`/`IPost` markers where the verb matters, and protect the request DTO with `[ValidateIsAuthenticated]` or `[ValidateIsAdmin]`. Hiding a button is not authorization; the server must check.
+
+After changing DTOs, rebuild and restart the backend, then regenerate the TypeScript client:
+
+```bash
+cd MyApp.Client
+npm run dtos
+npm run typecheck
+```
+
+`npm run dtos` keeps the options in the header of `lib/dtos.ts`, including `MakePropertiesOptional: True`. Treat the generated file as output, not source: business rules and authorization stay on the server.
+
+## Call it from a page
+
+Inside a client component, use `useClient()`. Its methods return an `ApiResult` and never throw for API errors, so no `try/catch` is needed:
+
+```tsx
+const client = useClient()
+
+useEffect(() => {
+  (async () => {
+    const api = await client.api(new GetAccountLicenses())
+    if (api.succeeded) setLicenses(api.response!.results ?? [])
+    else setError(api.error?.message ?? 'Unable to load licenses.')
+  })()
+}, [])
+```
+
+Use `apiForm` for multipart uploads.
+
+The hook returns a new wrapper on every render. Don't list it as an effect dependency, or loading-state changes can trigger a request loop. Use a mount effect for fixed initial reads, or depend on the actual query inputs. Keep loading, error and empty states distinct.
+
+## Static export
+
+The client must build with `npm run build` as a static export, which ASP.NET Core serves in production. Put dynamic behavior in ServiceStack APIs, not in Next.js route handlers or Server Actions.

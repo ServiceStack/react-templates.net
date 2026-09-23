@@ -1,0 +1,51 @@
+---
+title: "Troubleshooting"
+description: "Resolve setup, payment recovery, offline coverage and GitHub availability problems."
+---
+
+## Setup and sales
+
+| Symptom | Check |
+| --- | --- |
+| Only Free appears on `/pricing` | Save amounts, choose **Create Missing Stripe**, then **Approve for sale** in `/admin/catalog` |
+| An offering became a draft again | Changing amount or currency withdraws approval; create the new price and approve it |
+| Checkout fails before redirect | Verified email, accepted current agreement, Stripe mode and price, P-256 signing key, short-key salt |
+| `/ready` returns 503 | Schema, Stripe keys, HTTPS `Stripe:BaseUrl`, salt, P-256 signing key, effective agreement and an approved price; `/admin/settings` shows most of these |
+| App fails to start after setting `LicensePrivateKeyPath` | The file is read at startup; the path is relative to `MyApp`, so check it exists and is readable |
+
+## Payments
+
+| Symptom | Check |
+| --- | --- |
+| Paid but no license | Choose **Check payment status**; then check signing configuration, the Stripe payment and the order's review state |
+| Webhooks aren't arriving | Endpoint URL, `Stripe:WebhookSecret` and selected events; reconciliation still recovers orders every 10 minutes |
+| An order is flagged for review | Compare it with the Stripe payment, refund or dispute before completing the review |
+
+Never have a customer purchase again to repair a pending order.
+
+## Licenses in apps
+
+| Symptom | Check |
+| --- | --- |
+| License rejected (`invalid`) | Signature against the bundled public key, issuer, product and complete three-part key |
+| Newer build stays in Free (`buildNotCovered`) | Expected when the build date is after `updatesThrough`; renew or use a covered version |
+| Renewed license still shows the old cutoff | Copy or download the new key; old copies never change |
+| Revoked or refunded license still works | Expected: offline copies can't be remotely disabled |
+| Refresh returns 404 | The key isn't recognized; check the server's short-key salt hasn't changed |
+
+## Downloads and email
+
+| Symptom | Check |
+| --- | --- |
+| No releases shown | `Licensing:GitHubRepository` is a public `owner/repository` with published releases; fallback needs one earlier successful fetch |
+| Old releases shown during a GitHub outage | Expected: the last successful response is served until GitHub recovers |
+| A download link fails | The cache stores metadata, not files; check the asset on GitHub |
+| Email queued but not received | SMTP settings, verified address, preferences and attempt count |
+
+## Development pitfalls
+
+- `useClient()` returns a new wrapper on each render. Using it as a fetch-effect dependency can call the API repeatedly.
+- Write SQLite connection strings with `DataSource=` (no space) as a complete string, e.g. `DataSource=App_Data/app.db;Cache=Shared`. A malformed value can be treated as a path and create stray directories.
+- After changing DTOs, restart the backend before running `npm run dtos`.
+
+Never repair commercial records by editing settlement evidence, changing released build dates, or rotating stable secrets.

@@ -1,0 +1,33 @@
+---
+title: "Keys and backups"
+description: "Protect license signing keys and restore your licensing service."
+---
+
+## What to back up
+
+| Item | Why |
+| --- | --- |
+| Application database | Customers, licenses, orders and settlement evidence |
+| JWT private key | Needed to sign every future license, renewal and reissue |
+| Short-key salt | Needed for existing licenses' refresh keys to keep working |
+| `App_Data` | Data-protection keys (sign-in cookies, Identity tokens), jobs, and the GitHub release cache |
+| Deployment settings | Stripe, SMTP and other configuration |
+
+Back up SQLite with its online backup API or while the app is stopped, not by copying a live file. For server databases, use the provider's normal backup tools. Store the private key and salt in a secret store, separate from database backups.
+
+Keep the public key with your application source. It isn't secret, and every app build needs it.
+
+## Restore
+
+Restore the database together with the same private key and salt, then check `/ready` and issue a test license. Verify it with an app built against your public key, and check that an older license still refreshes.
+
+## Replacing the signing key
+
+Each app build trusts exactly one public key, with no key discovery. If you replace the key pair:
+
+1. Ship app builds containing the new public key.
+2. Only then switch the server to the new private key.
+
+Builds that contain only the old key reject new licenses, and new builds reject licenses signed by the old key. Customers would need their license reissued to use new builds. Only replace the key if it's compromised, and treat that as an incident.
+
+Never change the salt or signing key as a shortcut to fixing a delivery problem.

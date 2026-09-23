@@ -1,0 +1,58 @@
+---
+title: "Issue your first JWT license"
+description: "Generate one key pair, configure the server and issue a license from Operations."
+---
+
+## Generate the key pair
+
+From the repository root:
+
+```bash
+dotnet run --project MyApp.Licensing.Tool -- jwt ./license-keys
+```
+
+The tool creates `license-private.pem` and `license-public.pem` with owner-only file permissions. It refuses to overwrite an existing directory, so you cannot accidentally replace a key that already signed licenses.
+
+- `license-private.pem` stays on the server. Back it up: every license you issue depends on it.
+- `license-public.pem` is bundled with your .NET and Electron apps.
+
+Keep `license-keys/` out of source control.
+
+## Configure the server
+
+Add the key and a short-key salt to `.env`:
+
+```dotenv
+# Path relative to MyApp, or absolute
+Licensing__LicensePrivateKeyPath=../license-keys/license-private.pem
+# Random base64 32-byte value, e.g. from: openssl rand -base64 32
+Licensing__ShortKeySalt=replace-with-random-base64
+# Optional; must match the issuer your apps expect. Defaults to acme-studio
+Licensing__LicenseIssuer=acme-studio
+```
+
+Instead of a path you can supply the PEM contents in `Licensing__LicensePrivateKeyPem`, which suits secret stores. The salt hashes the optional refresh key embedded in each license. Issuance and checkout both require it, even if your app only verifies offline. Keep it stable: changing it breaks optional refresh for existing licenses.
+
+Restart the backend. `/admin/settings` reports whether signing is configured, without showing the key.
+
+## Issue a license
+
+1. Sign in as an Admin and open **Licenses** at `/admin/licenses`.
+2. Choose **Issue a license** and search for a registered customer by name or email.
+3. Enter the registered name, organization, seat count, edition and coverage: a dated update cutoff or Lifetime.
+
+The cutoff is signed into the JWT as a UTC calendar date (`updatesThrough`).
+
+## Try it in the sample app
+
+Sign in as that customer, open `/account` and choose **Download license file**, which saves `acme-<id>.license`. Then run the sample CLI with your public key embedded and the file as its argument:
+
+```bash
+dotnet run --project MyApp.SampleApp -p:LicensePublicKeyFile=$PWD/license-keys/license-public.pem -- ./acme-<id>.license
+```
+
+It prints whether Pro is enabled for the sample's build date (`2026-09-21` by default; override with `-p:AppBuildDate=YYYY-MM-DD`) and the signed registered details.
+
+No private keys are committed with the template, and existing databases never gain a default key. Configure yours before accepting payments.
+
+Next: [connect Stripe](/docs/next-license/getting-started/connect-stripe-sandbox).

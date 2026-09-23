@@ -1,0 +1,15 @@
+{
+  "title": "Development",
+  "icon": "Code",
+  "pages": [
+    "index",
+    "dotnet-license-verification",
+    "electron-license-verification",
+    "add-a-feature-gate",
+    "desktop-integration",
+    "release-automation",
+    "typed-client-and-pages",
+    "testing-and-migrations"
+  ],
+  "defaultOpen": false
+}

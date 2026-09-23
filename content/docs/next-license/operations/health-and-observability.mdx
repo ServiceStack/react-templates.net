@@ -1,0 +1,28 @@
+---
+title: "Health and observability"
+description: "Use readiness, review queues and safe logs to find operational problems."
+---
+
+## Health endpoints
+
+`/up` answers whether the process is alive. `/ready` answers whether it can sell licenses: it returns `503 Unhealthy` until all of these hold:
+
+- The licensing tables exist.
+- Stripe has a secret key and webhook secret, and `Stripe:BaseUrl` is an HTTPS URL.
+- The short-key salt is valid.
+- The JWT signing key is configured and uses P-256.
+- An agreement is in effect and at least one price is approved for sale.
+
+A fresh template is alive but not ready. The response doesn't say which check failed; use `/admin/settings` and the launch checklist on `/admin` to find it.
+
+Readiness doesn't make a purchase, send email, check tax registrations or test GitHub. Monitor those separately.
+
+## Operations overview
+
+`/admin` shows active licenses, orders requiring review and pending Stripe events, plus a launch checklist. Treat a review flag as a prompt to investigate, not proof of fraud. Background jobs, request logs and the database are available through `/admin-ui`.
+
+## Logging
+
+Request logs deliberately omit request and response bodies, session and header data, tokens and network identifiers. That prevents accidental capture of license keys and credentials, but it means you can't replay raw requests to troubleshoot. Correlate using order IDs, Stripe event IDs and audit events instead.
+
+See [background recovery](/docs/next-license/operations/background-recovery) and [troubleshooting](/docs/next-license/operations/troubleshooting).

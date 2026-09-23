@@ -1,0 +1,38 @@
+---
+title: "Verify before shipping"
+description: "Run local checks and separate them from provider and operating-system acceptance."
+---
+
+## Local checks
+
+From the repository root (Node.js is required: the .NET tests run the JavaScript verifier against .NET-signed tokens):
+
+```bash
+dotnet test MyApp.Tests
+dotnet build MyApp.SampleApp
+dotnet run --project MyApp.SampleApp
+cd MyApp.Client
+npm run typecheck
+npm run test:run
+npm run build
+```
+
+The sample's offline output must show a covered build unlocking Pro, an uncovered build requiring renewal, and Lifetime covering future builds. Registered name, organization and seats must match in .NET and Electron. Changing the system clock must not change the result.
+
+If you deploy to PostgreSQL, MySQL/MariaDB or SQL Server, also run the [live database tests](/docs/next-license/development/testing-and-migrations#live-database-tests) against a test server.
+
+## Acceptance in a configured environment
+
+Local tests fake Stripe and don't send email. Before selling, exercise these in a Stripe test environment with a mail sink:
+
+- Purchase each offer and check the license, invoice link and delivery email.
+- Replay and reorder Stripe events, including delayed payment success and failure.
+- Try promotion codes, a 100% discount, tax, partial refunds and disputes.
+- Publish a GitHub release with installers; confirm downloads and notes appear, then simulate a GitHub failure and confirm the cached fallback.
+- Run your app with every template endpoint unreachable and confirm Pro still works.
+- Restore a backup into an isolated environment and verify old and newly issued licenses.
+- Check your installer packaging and code signing on each supported operating system.
+
+`/ready` confirms configuration, not that payments, email or downloads actually work.
+
+Continue with the [production checklist](/docs/next-license/security/production-checklist) and [deployment guide](/docs/next-license/operations/deployment).

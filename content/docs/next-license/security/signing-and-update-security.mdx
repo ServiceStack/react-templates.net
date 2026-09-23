@@ -1,0 +1,26 @@
+---
+title: "License signing security"
+description: "One server-held private key, an app-bundled public key, and the limits of offline trust."
+---
+
+## Keys
+
+Licenses are ES256-signed JWTs. The P-256 private key exists only in server configuration: never in the database, CI, app bundles or logs. Apps bundle only the public key.
+
+Whoever holds the private key can issue unlimited valid licenses for every build, so protect it like a production credential and plan for its [compromise](/docs/next-license/operations/backup-and-recovery#replacing-the-signing-key).
+
+## Verification
+
+Before enabling Pro, an app must verify the signature with its bundled key, pin ES256, and check issuer, product, paid edition and build coverage. Never trust a decoded payload or a stored `isPro` flag. The provided verifiers also reject unexpected header fields, tokens over 16,000 characters, and any `exp` or `nbf` claim.
+
+## Limits of offline licensing
+
+- Names, organizations and seats are signed but readable. Seat counts are informational.
+- Refunds, revocation, transfers and account deletion can't disable keys already held by disconnected apps.
+- Someone who controls a copy of your app can patch out its checks.
+
+This is a clear, verifiable eligibility signal, not DRM. See [signed JWT license keys](/docs/next-license/concepts/trust-and-license-files).
+
+## Installer integrity is separate
+
+License verification says nothing about whether an installer is genuine. Code signing, notarization and secure update delivery belong in your software pipeline and platform updater.

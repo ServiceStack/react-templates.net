@@ -1,0 +1,55 @@
+---
+title: "Configuration and secret ownership"
+description: "Configure licensing, commerce and delivery without putting private material in client bundles."
+---
+
+The backend reads `.env` from the repository root (or the working directory) without logging values; process environment variables take precedence. In deployments, the Kamal release workflow supplies an `APPSETTINGS_JSON` secret instead; see [deployment](/docs/next-license/operations/deployment). Environment variables replace `:` with `__`, for example `Licensing__LicensePrivateKeyPem`.
+
+## Database
+
+| Setting | Meaning |
+| --- | --- |
+| `Database:Provider` | `sqlite` (default), `postgres`, `mysql` or `sqlserver`; used by both OrmLite and EF Identity |
+| `ConnectionStrings:DefaultConnection` | Shared database; for SQLite write `DataSource=` with no space |
+
+## Licensing
+
+| Setting | Meaning |
+| --- | --- |
+| `Licensing:LicensePrivateKeyPem` | Private P-256 PEM for signing licenses |
+| `Licensing:LicensePrivateKeyPath` | Alternative: path to that PEM, relative to `MyApp` or absolute |
+| `Licensing:ShortKeySalt` | Stable random base64 32-byte salt for refresh keys; required for issuance |
+| `Licensing:LicenseIssuer` | JWT issuer your apps expect; default `acme-studio` |
+| `Licensing:GitHubRepository` | Public `owner/repository` providing releases and downloads |
+| `Licensing:RenewalDiscountGraceDays` | Days after a cutoff that renewal pricing still applies; default 60 |
+
+## Stripe
+
+Settings in the `Stripe` section override the same settings in the older `LicenseStripe` section.
+
+| Setting | Meaning |
+| --- | --- |
+| `Stripe:SecretKey` | Server-only API key |
+| `Stripe:WebhookSecret` | Signing secret for `/stripe/webhook` |
+| `Stripe:LiveMode` | `true` only with a live key |
+| `Stripe:BaseUrl` | Public HTTPS origin for Checkout return and account links |
+| `Stripe:AllowPromotionCodes` | Show promotion codes in Checkout; default off |
+| `Stripe:AutomaticTax` | Enable Stripe Tax; default off |
+
+## Email
+
+`SmtpConfig` configures SMTP for Identity and licensing email. Without it, licensing messages stay queued.
+
+## Where each secret belongs
+
+Signing keys, the salt and Stripe credentials are server-only. Never put them in `NEXT_PUBLIC_*` variables, generated DTOs, screenshots, logs or source control. Apps receive only the public key. `/admin/settings` reports whether each integration is configured without revealing values.
+
+![Integration status in light mode](/img/next-license/integrations.png)
+
+Prices are configured at `/admin/catalog` and agreements at `/admin/agreements`, not in settings.
+
+## Product ID
+
+The product ID is `acme-studio`, used as the JWT `aud` claim. To rename it, change the server's product ID, your apps' expected product and the branding together. The template supports one product per deployment.
+
+Read [keys and backups](/docs/next-license/operations/backup-and-recovery) before replacing any stable secret.

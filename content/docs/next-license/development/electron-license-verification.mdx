@@ -1,0 +1,53 @@
+---
+title: "Verify licenses in Electron"
+description: "Direct JavaScript verification with no .NET helper or IPC."
+---
+
+Copy `MyApp.Licensing.JavaScript/license.mjs` into your app. It uses Node's built-in `crypto`, has no npm dependencies, makes no network requests, and needs no .NET runtime or helper process.
+
+```javascript
+import { verifyLicense } from './license.mjs';
+
+const result = verifyLicense(savedOrPastedKey, {
+  publicKey: bundledPublicKeyPem,
+  issuer: 'acme-studio',
+  product: 'acme-studio',
+  buildDate: '2026-09-21',
+});
+
+const enablePro = result.valid;
+if (result.license) {
+  const { name, organization, seats } = result.license;
+  console.log(`Registered to ${name} · ${organization ?? ''} · ${seats} seats`);
+}
+```
+
+`bundledPublicKeyPem` is the contents of `license-public.pem` shipped inside your app. Keep the issuer, product and release date in application code or build metadata, never in user input.
+
+## Where to call it
+
+Call it where your app already has Node access, normally the main process. It's an ordinary synchronous function, so no IPC service is needed; feed the result into your existing app state and menus.
+
+A sandboxed renderer can't import `node:crypto`. Use your existing preload/state boundary to pass the result, or an ES256-capable browser JWT library for a renderer-only app. Don't enable Node integration just to check a license.
+
+## Using the result
+
+The result has the same statuses as [.NET](/docs/next-license/development/dotnet-license-verification#use-the-result-in-your-app): `valid`, `missing`, `invalid`, `buildNotCovered` and `editionNotCovered`.
+
+- Check `result.valid` before running a Pro operation, not just when rendering its button.
+- Save the signed key locally and verify it again on startup.
+- Show registered details only from `result.license`, which is set only after the signature verifies. `buildNotCovered` still includes them, for a friendly renewal notice.
+
+## Standard JWT compatibility
+
+The token is a standard compact JWT signed with ES256 (P-256/SHA-256), so any maintained JWT library can verify it. To match the template's policy:
+
+1. Pin the algorithm to ES256 and verify with your bundled public key.
+2. Require the expected issuer (`iss`) and product (`aud`).
+3. Validate claim types, and that `seats` is positive.
+4. Require `edition` to be `Pro` or `Enterprise`.
+5. Check `lifetime || buildDate <= updatesThrough`.
+
+Never use a key URL from the token or a decode-only API. The token has no `exp`/`nbf`, so disable any library default that requires them. The .NET test suite runs `license.mjs` against .NET-signed tokens, covering coverage boundaries, tampering, wrong products and Lifetime.
+
+See [Node crypto](https://nodejs.org/api/crypto.html) and [Electron security](https://www.electronjs.org/docs/latest/tutorial/security). Offline licensing is an eligibility check, not tamper-proof enforcement.

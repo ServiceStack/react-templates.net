@@ -1,0 +1,12 @@
+{
+  "title": "Security",
+  "icon": "ShieldCheck",
+  "pages": [
+    "index",
+    "accounts-and-roles",
+    "privacy-and-retention",
+    "signing-and-update-security",
+    "production-checklist"
+  ],
+  "defaultOpen": false
+}

@@ -1,0 +1,16 @@
+{
+  "title": "Features",
+  "icon": "KeyRound",
+  "pages": [
+    "index",
+    "customer-licenses",
+    "transfers-and-preferences",
+    "offline-and-refresh",
+    "releases-and-downloads",
+    "operations-center",
+    "promotions-and-tax",
+    "refunds-and-disputes",
+    "notifications"
+  ],
+  "defaultOpen": false
+}

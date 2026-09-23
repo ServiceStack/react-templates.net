@@ -1,15 +1,16 @@
 {
-    "pages": [
-        "index",
-        "benefits",
-        "templates",
-        "next-saas",
-        "security",
-        "---Learn---",
-        "vibe-coding",
-        "autoquery",
-        "claude",
-        "configuration",
-        "deployments"
-    ]
+  "pages": [
+    "index",
+    "benefits",
+    "templates",
+    "next-saas",
+    "next-license",
+    "security",
+    "---Learn---",
+    "vibe-coding",
+    "autoquery",
+    "claude",
+    "configuration",
+    "deployments"
+  ]
 }

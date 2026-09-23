@@ -1,0 +1,31 @@
+---
+title: "Refunds and dispute review"
+description: "Handle refunds and disputes without promising remote revocation."
+---
+
+Refunds and disputes are recorded from Stripe events and flag the order for review. Operators handle them in the Stripe Dashboard or through the admin APIs below. The Operations UI links each order to its Stripe payment and records reviews.
+
+## Refunds
+
+Refunds made in Stripe arrive through `refund.*` webhooks. Each refund is stored separately, so partial and multiple refunds are preserved, and the order is flagged for review.
+
+To refund from your own support tool, call the Admin-only `RefundLicenseOrder` API:
+
+| Field | Meaning |
+| --- | --- |
+| `Id` | Order ID |
+| `AmountCents` | Amount to refund |
+| `Reason` | Recorded with the request |
+| `RequestId` | A new UUID for each intended refund |
+
+The request is stored before Stripe is called, and `RequestId` is the Stripe idempotency key. If a response is lost, retry with the **same** `RequestId`; a new one means a different refund. Requests left unresolved beyond Stripe's idempotency window need investigation rather than a blind retry.
+
+## Disputes
+
+`charge.dispute.*` webhooks record the dispute's Stripe ID, amount, currency, reason and status, and flag the order. Record your support review with `ReviewLicenseDispute`, separately from responding to the dispute in Stripe. A later status change from Stripe reopens the review. Complete the order review (`ReviewLicenseOrder`, or **Orders** in Operations) once its disputes are addressed.
+
+## Licenses are not revoked automatically
+
+Neither refunds nor disputes revoke a license. Revoking is a separate operator decision through the `RevokeLicense` API, with a required reason. It stops the portal and refresh from delivering the key, but copies already held keep working offline indefinitely.
+
+Exercise refund and dispute flows in a Stripe test environment. See [orders, payment and entitlement](/docs/next-license/concepts/commerce-state) and [Operations Center](/docs/next-license/features/operations-center).

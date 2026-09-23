@@ -1,0 +1,17 @@
+{
+  "title": "Next License",
+  "description": "Perpetual Software Licensing Template",
+  "root": true,
+  "icon": "KeyRound",
+  "pages": [
+    "index",
+    "---Start Here---",
+    "getting-started",
+    "---Reference---",
+    "concepts",
+    "features",
+    "development",
+    "operations",
+    "security"
+  ]
+}

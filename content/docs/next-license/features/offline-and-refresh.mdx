@@ -1,0 +1,31 @@
+---
+title: "Offline licenses and optional refresh"
+description: "Verify licenses offline, with an optional refresh that stores no device data."
+---
+
+![A customer viewing signed licenses and purchase history in light mode](/img/next-license/customer-licenses.png)
+
+Paid use is offline. Your app verifies the license with its embedded public key and compares its embedded build date with the signed update cutoff. It never needs to contact the licensing server, and network availability never controls Pro.
+
+## Optional refresh
+
+A desktop app can offer an explicit, best-effort refresh so renewals arrive without the customer re-importing the key:
+
+```http
+POST /licensing/refresh
+Content-Type: application/json
+
+{ "key": "<refreshKey from the license>" }
+```
+
+Send either `key` (the license's `refreshKey` claim) or `blob` (the complete current license), not both. The server responds with the latest signed license:
+
+```json
+{ "blob": "eyJhbGciOiJFUzI1NiIs...", "status": "Active" }
+```
+
+A revoked license returns `"status": "Revoked"` and no key. Unknown keys return 404. Requests are rate-limited to 30 per minute per license and 60 per minute per client IP.
+
+The server stores nothing about the request: no device identifiers, app versions, operating systems or installation history. It only looks up the license's current version.
+
+Always verify the returned key with your public key before saving it, and never let a refresh failure affect Pro. The [`ActivationClient`](/docs/next-license/development/desktop-integration#optional-refresh) in `MyApp.Licensing` implements these rules for .NET apps. The same endpoint is also routed at `/licensing/activate`, which `ActivationClient` calls.

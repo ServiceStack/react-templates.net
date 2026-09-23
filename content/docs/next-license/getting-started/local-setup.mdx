@@ -1,0 +1,58 @@
+---
+title: "Run locally"
+description: "Install dependencies, start the combined development host, and verify the offline sample."
+---
+
+You need the .NET 10 SDK, Git, and a Node.js version supported by the installed Next.js package. The commands below assume Bash and a clean checkout.
+
+```bash
+git clone https://github.com/NetCoreTemplates/next-license.git
+cd next-license
+cp .env.example .env
+cd MyApp.Client && npm ci
+cd ../MyApp && dotnet watch
+```
+
+Open `https://localhost:5001` once the host starts. In development, ASP.NET Core proxies the Next.js dev server, so both run behind one origin. Trust the ASP.NET Core development certificate if your browser warns about it.
+
+The server reads `.env` from the repository root at startup without logging its values; existing process environment variables take precedence. Restart the backend after editing it. The example values are placeholders: the storefront runs without them, but checkout needs [signing](/docs/next-license/getting-started/signing-and-first-license) and [Stripe](/docs/next-license/getting-started/connect-stripe-sandbox) configuration.
+
+## Development accounts
+
+Development seeds an administrator, `admin@email.com` / `p@55wOrd`, which can open the Operations Center at `/admin`. These accounts are created only in the Development environment; provision production administrators separately.
+
+## Database
+
+The default is SQLite at `MyApp/App_Data/app.db`. EF Core manages the Identity tables and OrmLite manages the licensing tables, in the same database.
+
+For a custom SQLite location, use a complete connection string. Always write `DataSource=` with no space:
+
+```dotenv
+ConnectionStrings__DefaultConnection=DataSource=App_Data/app.db;Cache=Shared
+```
+
+To use PostgreSQL, MySQL/MariaDB or SQL Server, also set `Database__Provider` to `postgres`, `mysql` or `sqlserver`. Both ORMs follow that setting. See [deployment](/docs/next-license/operations/deployment).
+
+An empty database is migrated automatically at startup. To run migrations explicitly:
+
+```bash
+cd MyApp
+npm run migrate
+```
+
+While the template is unpublished there are only two baseline migrations, so you can reset a disposable development database by stopping the app and deleting `app.db`, `app.db-wal` and `app.db-shm`. Keep the rest of `App_Data`, which holds data-protection keys and the GitHub download cache.
+
+A fresh installation has five inactive price drafts, no published license agreement and no signing key. Public pricing shows only Free until you configure and approve paid offerings.
+
+## Prove offline behavior
+
+From the repository root:
+
+```bash
+dotnet run --project MyApp.SampleApp
+dotnet run --project MyApp.SampleApp -- --desktop
+```
+
+The CLI prints Free, covered, uncovered and Lifetime results without contacting a server. The `--desktop` option opens an Avalonia window where you can paste the example keys and watch Pro turn on. Both use disposable keys generated for that run only.
+
+Next: [project tour](/docs/next-license/getting-started/project-tour).

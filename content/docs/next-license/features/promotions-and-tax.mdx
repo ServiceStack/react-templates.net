@@ -1,0 +1,26 @@
+---
+title: "Promotions and tax"
+description: "Let Stripe own promotion codes and tax, while each order keeps its own evidence."
+---
+
+Stripe decides promotion eligibility and calculates tax. Next License records what was allowed and what Stripe charged, and checks the arithmetic before issuing a license.
+
+## Promotion codes
+
+Set `Stripe__AllowPromotionCodes=true` to show a promotion-code field in Stripe Checkout. Create coupons, codes, restrictions and expiry dates in the Stripe Dashboard. Next License keeps no copy of your promotions and no redemption counter; there are no referral payouts or discount-stacking rules.
+
+## Automatic tax
+
+Set `Stripe__AutomaticTax=true` to enable Stripe Tax for new Checkout sessions. Configure your tax registrations and product tax codes in Stripe. Prices must be tax-exclusive.
+
+## How orders are checked
+
+Before redirecting, each order records whether promotion codes and automatic tax were allowed. Changing these settings later doesn't affect orders already started.
+
+Fulfillment then checks the original subtotal, quantity, currency and Stripe price, and confirms that any discount was allowed, that total = subtotal − discount + tax, and that payment succeeded. The resulting settlement, including the promotion code used, is immutable.
+
+A fully discounted order requires a completed `no_payment_required` session with a zero total, and is only accepted when promotion codes were allowed. No payment is simulated locally. Its update term begins when completion is first observed.
+
+## Test first
+
+In your Stripe test environment, try eligible and ineligible codes, expired codes, currency restrictions, a 100% discount and tax before enabling these settings for live sales.

@@ -1,0 +1,35 @@
+---
+title: "How Next License works"
+description: "One purchase, one signed key, one offline Pro check."
+---
+
+Next License sells one-time licenses that unlock Pro in a desktop app. This page follows a license from purchase to unlock.
+
+## 1. Purchase
+
+The customer chooses an offer on `/pricing`, enters the registered name, organization and seat count, accepts your published license agreement, and continues to Stripe Checkout. Before the redirect, the server records the order, its price and the checkout policy, so nothing the customer changes in the browser can alter what they are charged for.
+
+## 2. Fulfillment
+
+Stripe notifies `/stripe/webhook`. The server retrieves the current Stripe objects, confirms the payment matches the recorded order, then signs the license and records the settlement in one transaction. If a webhook is delayed or lost, the account return page and background reconciliation check Stripe again. See [orders, payment and entitlement](/docs/next-license/concepts/commerce-state).
+
+## 3. Delivery
+
+The license is a standard **ES256-signed JWT**. The customer opens **My licenses** at `/account` and chooses **Copy license key** or **Download license file**. Email only links to the account; it never attaches the key.
+
+## 4. Verification in your app
+
+The app bundles the public key and its own immutable release date. It calls `LicenseJwt.Verify` (.NET) or `verifyLicense` (JavaScript) and enables Pro when the result is valid:
+
+```
+valid = signature valid AND issuer/product match AND paid edition
+        AND (lifetime OR buildDate <= updatesThrough)
+```
+
+No network, activation, certificate chain or helper process is involved. See [build coverage](/docs/next-license/concepts/feature-entitlements).
+
+## 5. Renewal
+
+A dated license keeps working in every build it already covers. A newer, uncovered build stays in Free mode and can offer renewal. After renewing, the customer copies the updated key; the license ID stays the same.
+
+Next: [run locally](/docs/next-license/getting-started/local-setup).

@@ -1,0 +1,36 @@
+---
+title: "Orders, payment and entitlement"
+description: "Follow an order from accepted terms to an immutable settlement and license version."
+---
+
+## Before checkout
+
+Before redirecting to Stripe, the server records a pending order with its order line, the accepted agreement version, and a checkout policy snapshot (whether promotion codes and automatic tax were allowed). Editing the redirect URL or form cannot change these. If the policy snapshot is missing, fulfillment fails closed.
+
+## Webhook intake
+
+Stripe events are signature-verified and written to a durable inbox before any processing, then handled by a background job. If the process crashes after accepting an event, [inbox recovery](/docs/next-license/operations/background-recovery) requeues it.
+
+## Verifying payment
+
+Processing never trusts the webhook body alone. It retrieves the current Checkout Session and payment from Stripe and checks the order identity, owner, SKU, Stripe price, quantity, currency, discount and tax arithmetic, and successful payment. A completed session whose payment is still pending does not issue a license.
+
+## Fulfillment
+
+In one database transaction, fulfillment creates or updates the license, appends a new signed JWT version, records the settlement, and queues the delivery email. Unique constraints and the transaction prevent duplicates:
+
+- Replayed payment evidence does not issue another license.
+- Repeated evidence must match the original settlement exactly; a mismatch fails processing and is never overwritten.
+- A late failure event cannot undo an already successful payment.
+
+Settlements and checkout policies are insert-only. Correct mistakes with new records, not by editing evidence.
+
+## Zero-total orders
+
+A fully discounted order has no charge. It requires a completed `no_payment_required` session, a zero total and an order policy that allowed promotion codes. The update term starts when completion is first observed.
+
+## After payment
+
+Refunds and disputes are recorded separately and preserve partial and multiple refunds. Either can flag the order for support review. Neither revokes the license automatically, and nothing can disable copies customers already hold.
+
+See [customer licenses](/docs/next-license/features/customer-licenses), [refunds and disputes](/docs/next-license/features/refunds-and-disputes) and [background recovery](/docs/next-license/operations/background-recovery).

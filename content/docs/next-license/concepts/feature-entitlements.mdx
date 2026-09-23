@@ -1,0 +1,36 @@
+---
+title: "Build coverage"
+description: "Dated update cutoffs, Lifetime updates, and why paid licenses never expire."
+---
+
+A license doesn't unlock features by date of use. It unlocks every build **released** on or before its update cutoff, and keeps unlocking them forever.
+
+The application embeds its product ID, expected issuer, public key and release date (`YYYY-MM-DD`). The license contains the registered name, organization, seats, edition, and either a dated cutoff (`updatesThrough`) or Lifetime coverage.
+
+```
+valid = signature valid AND issuer/product match AND paid edition
+        AND (lifetime OR buildDate <= updatesThrough)
+```
+
+| License | App build date | Pro |
+| --- | --- | --- |
+| Dated through 2026-09-21 | 2026-09-21 | Enabled |
+| Dated through 2026-09-21 | 2026-09-22 | Renewal required |
+| Lifetime | Any | Enabled |
+| Missing, tampered or wrong product | Any | Disabled |
+
+The comparison is inclusive and uses UTC calendar dates.
+
+## Rules for release dates
+
+- Give each distributed version a fixed release date at build time. Rebuilding the same version keeps its original date.
+- Never derive coverage from the current time or a file timestamp. An already-covered version stays covered years later, and changing the system clock changes nothing.
+- To fix a mistaken release, publish a new version rather than editing the date of a shipped one.
+
+## One decision per build
+
+Every Pro feature in a build uses the same result. Free features stay available regardless. There are no per-feature introduction dates: a newer uncovered build does not partially unlock older Pro features. Customers who want Pro in that build renew, or keep using a covered earlier version.
+
+## Renewal terms
+
+A 12-month purchase sets the cutoff to 12 months after payment. A renewal extends from the later of the current cutoff and the payment date, so renewing early never loses time. Lifetime upgrades remove the cutoff.

@@ -1,0 +1,48 @@
+---
+title: "Project and application tour"
+description: "Find the code and screens that own each part of the licensing experience."
+---
+
+## Projects
+
+| Project | Owns |
+| --- | --- |
+| `MyApp` | ASP.NET Core host, Identity, migrations, background workers, health checks and security configuration |
+| `MyApp.Client` | Next.js static site: storefront, customer account and Operations Center |
+| `MyApp.ServiceModel` | Request/response DTOs and database records |
+| `MyApp.ServiceInterface` | Signing, checkout, fulfillment, refunds, transfers, notifications and GitHub downloads |
+| `MyApp.Licensing` | .NET verifier (`LicenseJwt`) and optional refresh client (`ActivationClient`) |
+| `MyApp.Licensing.JavaScript` | Dependency-free Node/Electron verifier (`license.mjs`) |
+| `MyApp.Licensing.Core` | Shared entitlement, short-key and JSON primitives |
+| `MyApp.Licensing.Tool` | ES256 key-pair generation |
+| `MyApp.SampleApp` | Avalonia desktop sample and offline CLI |
+| `MyApp.Tests` | Backend regression tests, .NET-to-Node compatibility and live database tests |
+
+`MyApp.Licensing` and `MyApp.Licensing.Core` also contain signed-document and update-manifest code from an earlier design. The server no longer publishes update feeds, and the simple JWT flow does not use that code.
+
+## Application pages
+
+| URL | Purpose |
+| --- | --- |
+| `/pricing` | Offers, registered details and checkout agreement |
+| `/download`, `/changelog` | Published GitHub releases, platform downloads and Markdown notes |
+| `/eula`, `/privacy` | Current license agreement and privacy page |
+| `/account` | Licenses, renewals, delivery email and order history |
+| `/account/settings` | Transfers, email preferences and personal data |
+| `/admin` | Operations Center (Admin role) |
+| `/admin-ui` | ServiceStack system administration |
+
+The Operations Center has separate pages for [pricing, releases, licenses, orders, license terms and settings](/docs/next-license/features/operations-center).
+
+## Server endpoints
+
+| Endpoint | Purpose |
+| --- | --- |
+| `/api/{RequestDto}` | Typed ServiceStack APIs |
+| `/stripe/webhook` | Stripe event intake |
+| `/licensing/refresh` | Optional license refresh for desktop apps |
+| `/up`, `/ready` | Liveness and sales readiness |
+
+Change API contracts in C#, then [regenerate TypeScript DTOs](/docs/next-license/development/typed-client-and-pages). The client is a static export, so don't add request-time Next.js handlers or Server Actions.
+
+Next: [issue your first license](/docs/next-license/getting-started/signing-and-first-license).

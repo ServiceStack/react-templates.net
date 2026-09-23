@@ -1,0 +1,27 @@
+---
+title: "Accounts, roles and API authorization"
+description: "Protect customer ownership and keep operator capabilities server-enforced."
+---
+
+## Customers
+
+ASP.NET Core Identity handles registration and sign-in, and ServiceStack uses the same authenticated session. Purchases and transfer recipients require a verified email address.
+
+Customer APIs return only the signed-in user's licenses, orders and invoices. Knowing a license or order ID grants nothing. Transfers must be accepted by the intended recipient and leave billing history with the original buyer.
+
+## Operators
+
+Operations APIs require the **Admin** role. Hiding a button is not the permission boundary; each request DTO is validated on the server. Create production administrators through a controlled process; the known development accounts are seeded only in Development.
+
+## Request protections
+
+- Cookie-authenticated POST, PUT, PATCH and DELETE requests must carry a same-origin `Origin` or `Referer`, or they are rejected with `CsrfValidationFailed`. The Stripe webhook and license refresh endpoints are exempt because they don't use cookies; Identity pages keep their own antiforgery tokens.
+- Responses include `nosniff`, `DENY` framing and a strict referrer policy. Outside Development, a Content Security Policy limits scripts, styles and connections to the site's own origin.
+- Account, licensing and API responses are sent with `Cache-Control: no-store`.
+- Refresh is rate-limited per license and per client IP.
+
+Behind a proxy, forward the scheme and host correctly so origin checks see the public HTTPS origin.
+
+## What the server can't enforce
+
+Paid desktop use keeps working with no server access at all. Don't promise customers or stakeholders remote enforcement that this trust model can't provide.

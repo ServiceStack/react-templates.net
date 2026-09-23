@@ -1,0 +1,26 @@
+---
+title: "Lifecycle notifications"
+description: "Delivery links, update reminders, optional announcements and email retries."
+---
+
+| Message | When | Default |
+| --- | --- | --- |
+| Delivery | After purchase or renewal, and on **Resend delivery email** | Always |
+| Transfer | When a license transfer is offered to the recipient | Always |
+| Update reminder | 30, 7 and 0 days before a dated cutoff | On |
+| Release announcement | Stable GitHub releases from the last 7 days | Off |
+| Win-back | 14 days after a dated cutoff, listing versions released since | Off |
+
+Delivery messages link to the account; they never attach the license key. Fulfillment queues the delivery message in the same transaction that issues the license. Resend requests within the same hour are combined into one message.
+
+Reminders explain that covered versions keep working. Lifetime licenses get no reminders or win-back messages. Customers choose optional messages in `/account/settings`, and preferences are checked again just before sending.
+
+## Delivery and retries
+
+Configure `SmtpConfig` for real delivery, and test with a mail sink first. Without SMTP, messages stay queued.
+
+The worker runs every five minutes, retries a failed message after at least 15 minutes, and gives up after ten attempts. Delivery is at-least-once: a crash after sending but before recording completion can send a duplicate. Run a single worker instance unless you add cross-instance leases or provider idempotency.
+
+If mail is missing, check the recipient's verified email, their preferences, SMTP configuration and the message's attempt count. Never log license keys, signing secrets or credentials while investigating.
+
+See [background recovery](/docs/next-license/operations/background-recovery).

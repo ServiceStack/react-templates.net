@@ -1,0 +1,55 @@
+---
+title: "Tests and database migrations"
+description: "Verify changes while keeping Identity and licensing migration histories separate."
+---
+
+## Running tests
+
+```bash
+dotnet test MyApp.Tests
+dotnet build MyApp.SampleApp
+cd MyApp.Client
+npm run typecheck
+npm run test:run
+npm run build
+```
+
+Node.js must be installed: the backend suite runs the JavaScript verifier against tokens signed by .NET. The suite covers JWT signing and coverage boundaries, .NET-to-Node compatibility, checkout policy and settlement replay, discounts and tax, renewals and reissues, stateless refresh, refunds and disputes, transfers, account deletion, request-log privacy and the GitHub cache fallback. Stripe is faked; no live charges are made.
+
+Keep local regression tests separate from external Stripe, SMTP, GitHub and operating-system acceptance.
+
+## Live database tests
+
+By default the tests use SQLite. To test PostgreSQL, MySQL/MariaDB or SQL Server, point them at an administrator connection on a **test** server:
+
+```bash
+export LICENSE_TEST_PROVIDER=postgres   # or mysql, sqlserver
+export LICENSE_TEST_ADMIN_CONNECTION="Host=localhost;Database=postgres;Username=postgres;Password=..."
+dotnet test MyApp.Tests --filter TestCategory=Database -m:1
+```
+
+The connection must select the administrative database (`postgres`, `mysql` or `master`). The fixture creates a random `next_license_test_*` database, runs migrations, Identity, host startup/restart and licensing workflows against it, then drops only that database. If the runner is killed, remove any leftover test database manually. Never run this against production.
+
+## Schema changes
+
+There are two baseline migrations:
+
+- `20240301000000_CreateIdentitySchema`: EF Core, Identity tables only.
+- `Migration1000`: OrmLite, all 17 licensing tables and the initial price drafts. It creates no triggers and runs on every supported provider.
+
+While the template is unpublished, change these baselines and recreate disposable development databases rather than adding compatibility migrations. Once you have deployed, never edit a deployed migration: add a new OrmLite migration for application tables, or an EF Core migration for Identity. Server providers currently bootstrap the Identity model directly, so a future Identity change needs provider-specific EF migrations.
+
+Before adding a table, read `docs/licensing/TABLE-REVIEW.md` in the template, which records why each table exists and what was deliberately removed. Settlement evidence and checkout policies are insert-only; don't add generic write APIs for them. Test schema changes on a fresh database and on a copy with existing licenses and orders.
+
+## Screenshot and demo data
+
+```bash
+cd MyApp
+npm run seed:screenshots
+```
+
+This applies migrations to a Development database, then adds three demo customers, two signed demo licenses, two sample paid orders and one pending order. All order numbers start with `DEMO-`, no Stripe IDs are created and no prices are approved. It leaves databases with existing non-demo orders or licenses untouched. Configure a disposable signing key first, and never ship that key or the demo accounts.
+
+## UI regressions
+
+`useClient()` returns a new wrapper on each render. When testing initial API reads, mock it with a fresh wrapper per render and assert bounded request counts as well as visible success and error states. That catches effect loops a stable mock would hide.

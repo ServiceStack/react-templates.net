@@ -1,0 +1,38 @@
+---
+title: "Production security review"
+description: "Review the deployment and the checks only your environment can prove."
+---
+
+Before enabling paid sales, confirm:
+
+**Branding and content**
+- [ ] Your own branding, product ID and reviewed license agreement are in place.
+- [ ] No example prices, demo accounts, demo keys or placeholder credentials remain.
+
+**Keys and secrets**
+- [ ] The JWT private key and short-key salt are in a secret store, backed up, and absent from source control, CI output, client bundles and logs.
+- [ ] Every app build bundles only your public key and its real release date.
+
+**Web security**
+- [ ] HTTPS, cookies, same-origin checks and forwarded headers work on the public origin.
+- [ ] Production administrators were created through a controlled process.
+
+**Payments**
+- [ ] Stripe mode matches the key, prices are one-time, and webhooks are delivered to the production endpoint.
+- [ ] Promotion codes, tax, refunds (including an uncertain retry) and disputes have been exercised in test mode.
+
+**Delivery**
+- [ ] SMTP was tested with a mail sink, then with your real provider, including preferences.
+- [ ] Each platform's GitHub download works, `App_Data` is persistent, and the cached fallback has been exercised.
+
+**Apps**
+- [ ] Customers can verify keys offline and see registered details on every supported OS.
+- [ ] Covered builds keep working with the network disconnected and the clock changed.
+
+**Data**
+- [ ] A backup has been restored in isolation, and old and new licenses verified afterwards.
+- [ ] Retention, account deletion and operator audit access match your policy.
+
+Local tests and `/ready` are useful evidence, not substitutes for these checks.
+
+Keep an incident procedure for a leaked signing key or a malicious release, and be clear with customers that copies they already hold can't be recalled.

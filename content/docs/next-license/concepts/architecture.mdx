@@ -1,0 +1,31 @@
+---
+title: "Architecture"
+description: "Keep commerce on the server and license checks inside the app."
+---
+
+Next License splits responsibility between four places:
+
+| Where | Responsible for |
+| --- | --- |
+| **Licensing server** (ASP.NET Core + ServiceStack) | Identity, checkout, fulfillment, JWT signing, customer portal APIs, operations, email |
+| **Stripe** | Payment, promotion eligibility, tax, refunds and disputes |
+| **GitHub** | Software releases, installers and release notes |
+| **Your app** | Verifying the license and enabling Pro |
+
+## Server
+
+The .NET host serves the Next.js static export, ServiceStack APIs, Identity pages and the Stripe webhook. There is no request-time Node.js server in production. EF Core manages Identity tables and OrmLite manages the 17 licensing tables, in one database: SQLite by default, or PostgreSQL, MySQL/MariaDB or SQL Server selected with `Database:Provider`.
+
+The server signs licenses with its private P-256 key (`Licensing:LicensePrivateKeyPem` or `LicensePrivateKeyPath`). Signing keys live in configuration, never in the database.
+
+Background workers recover missed Stripe events, reconcile pending checkouts and send email. They are designed for a single application instance. See [background jobs](/docs/next-license/operations/background-recovery).
+
+## App
+
+Applications bundle the matching public key and their own immutable release date. `LicenseJwt.Verify` (.NET) and `verifyLicense` (JavaScript) run entirely offline and return a Pro decision plus the signed registered details.
+
+Normal verification involves no account session, API call, activation, feature catalog or certificate chain. The only optional network call is [license refresh](/docs/next-license/features/offline-and-refresh), which fetches a renewed JWT and stores no device data. Refresh failures never affect Pro.
+
+## Why the server can't revoke licenses
+
+Because verification is offline, anything the server does later (refund, revocation, transfer, account deletion) cannot change a license file a customer already holds. These actions affect what the portal and refresh deliver from then on. This is a deliberate trade-off: customers keep working without your server, and you don't operate an availability-critical activation service.

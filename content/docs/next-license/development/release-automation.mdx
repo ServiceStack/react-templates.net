@@ -1,0 +1,34 @@
+---
+title: "Build and publish your app"
+description: "Publish from your software repository and let the website list GitHub releases."
+---
+
+Build and package your app with its own repository's pipeline. The licensing server takes no part in building or releasing software: there is nothing to reserve, sign or upload to it.
+
+## Embed the key and date
+
+Each build needs the public verification key and an immutable `YYYY-MM-DD` release date:
+
+```bash
+dotnet publish MyApp.SampleApp -c Release -r linux-x64 --self-contained true \
+  -p:LicensePublicKeyFile=/absolute/path/license-public.pem \
+  -p:AppBuildDate=2026-09-21
+```
+
+Electron apps bundle the same public PEM and set the date in their build metadata. Rebuilding an already released version must keep its original date. Never put the private signing key in CI outputs or app bundles; CI needs only the public key.
+
+## Publish to GitHub
+
+Attach your installers to a published GitHub release in your software repository, then set the repository on the website:
+
+```dotenv
+Licensing__GitHubRepository=owner/repository
+```
+
+After a restart, `/download`, `/changelog` and `/admin/releases` list the published releases, render their notes as Markdown and turn installers into platform download buttons. See [releases and downloads](/docs/next-license/features/releases-and-downloads).
+
+## Signing installers
+
+Platform code signing, notarization and installer testing belong in your software pipeline. The website only lists what GitHub publishes; it doesn't verify installer signatures.
+
+Listing a release doesn't change any license's coverage. Coverage depends only on the date embedded in the build.

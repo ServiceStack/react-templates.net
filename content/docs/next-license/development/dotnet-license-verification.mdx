@@ -1,0 +1,90 @@
+---
+title: "Verify licenses in .NET"
+description: "One local JWT check enables Pro and displays registered details."
+---
+
+Reference `MyApp.Licensing/MyApp.Licensing.csproj` from your .NET 10 application. `LicenseJwt` uses the runtime's built-in P-256 cryptography and JSON support, and never contacts a server.
+
+```csharp
+using MyApp.Licensing;
+
+// Public key, issuer, product and build date come from your app, never from user input.
+var result = LicenseJwt.Verify(
+    pastedKey,
+    embeddedPublicKeyPem,
+    issuer: "acme-studio",
+    product: "acme-studio",
+    buildDate: "2026-09-21");
+
+bool enablePro = result.Valid;
+if (result.License is { } license)
+{
+    Console.WriteLine($"Registered to {license.Name}");
+    Console.WriteLine($"Organization: {license.Organization}");
+    Console.WriteLine($"Licensed seats: {license.Seats}");
+}
+```
+
+## Embed the public key and build date
+
+Set both at build time so neither can be supplied through the license import form. `MyApp.SampleApp.csproj` shows one way to do it:
+
+```xml
+<PropertyGroup>
+  <AppBuildDate Condition="'$(AppBuildDate)' == ''">2026-09-21</AppBuildDate>
+</PropertyGroup>
+<ItemGroup>
+  <AssemblyMetadata Include="BuildDate" Value="$(AppBuildDate)" />
+</ItemGroup>
+<ItemGroup Condition="'$(LicensePublicKeyFile)' != ''">
+  <EmbeddedResource Include="$(LicensePublicKeyFile)" LogicalName="Acme.LicensePublicKey" />
+</ItemGroup>
+```
+
+At runtime, read the date from the `BuildDate` assembly metadata attribute and the key from the `Acme.LicensePublicKey` manifest resource. The sample also fails `dotnet publish` when no public key file is supplied, so a demo key can't ship by accident.
+
+## Use the result in your app
+
+Bind menu and button availability to `result.Valid`, and check the same result inside the operation itself so keyboard shortcuts and scripts follow the same rule:
+
+```csharp
+string ExportPro(string text, LicenseCheck license)
+{
+    if (!license.Valid)
+        throw new InvalidOperationException("A license for this version is required.");
+    return "PRO EXPORT\n" + text;
+}
+```
+
+Save the license key itself as a local user file or preference and verify it again on each startup. Never persist only an `isPro` flag. If importing a replacement key fails, keep the previous valid one.
+
+`result.Status` tells you what to show:
+
+| Status | Suggested app behavior |
+| --- | --- |
+| `valid` | Enable Pro and show registered name, organization and seats |
+| `missing` | Free mode with an **Enter license** action |
+| `invalid` | Explain that the key can't be verified; stay in Free mode |
+| `buildNotCovered` | Offer renewal, or a download of a covered version |
+| `editionNotCovered` | Keep Pro disabled |
+
+`result.License` is populated for `valid`, `buildNotCovered` and `editionNotCovered`, so an uncovered license can still show a friendly "Registered to … — renew to use this version" message. It is `null` for `missing` and `invalid`; never display unverified payload data. A wrong signature, issuer or product, or a malformed token, returns `invalid`. A malformed `buildDate` is an app configuration bug and throws.
+
+There is no `DateTime.UtcNow` check anywhere: covered builds keep working forever, and network failures can't change the result.
+
+## Run and publish the sample
+
+```bash
+dotnet run --project MyApp.SampleApp
+dotnet run --project MyApp.SampleApp -- --desktop
+
+dotnet publish MyApp.SampleApp -c Release -r win-x64 --self-contained true \
+  -p:LicensePublicKeyFile=/absolute/path/license-public.pem \
+  -p:AppBuildDate=2026-09-21
+```
+
+Without an embedded key, the sample generates a disposable key and example covered, uncovered and Lifetime licenses. The desktop window demonstrates Free editing, Pro export/uppercase and registered details.
+
+## Other target frameworks
+
+`MyApp.Licensing` targets .NET 10. For older frameworks, or other languages, use any maintained ES256-capable JWT library and apply the same checks; see [standard JWT compatibility](/docs/next-license/development/electron-license-verification#standard-jwt-compatibility).

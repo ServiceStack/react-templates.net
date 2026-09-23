@@ -1,0 +1,31 @@
+---
+title: "Next License Template"
+description: "Sell perpetual, offline-verified JWT licenses for .NET and Electron desktop apps."
+---
+
+![Example customer account with JWT license copy action](/img/next-license/customer-licenses.png)
+
+*Local demonstration account in light mode. No license token or payment credentials are shown.*
+
+Next License is a .NET 10 + Next.js template for selling one-time licenses that unlock Pro in a desktop app. Customers buy through Stripe Checkout, copy a signed license key from their account, and paste it into your app. The app verifies the key locally and shows who it is registered to.
+
+- **Offline verification.** A license is an ES256-signed JWT. Apps bundle one public key and check it with a single function call: no network, activation server or helper process.
+- **Perpetual use, dated updates.** A license covers every build released on or before its update cutoff, forever. Lifetime licenses cover future builds too. There is no expiry and no comparison with today's date.
+- **Complete storefront.** Pricing, Stripe Checkout, renewals, Lifetime upgrades, customer license portal, transfers, lifecycle email, and an admin Operations Center.
+- **GitHub-hosted downloads.** Published GitHub releases become download buttons and a Markdown changelog, with a cached fallback when GitHub is unavailable.
+- **Your choice of database.** SQLite by default, or PostgreSQL, MySQL/MariaDB or SQL Server, with Kamal deployment destinations for each.
+
+## Start here
+
+1. [How it works](/docs/next-license/getting-started/overview): the purchase-to-unlock flow in one page.
+2. [Run locally](/docs/next-license/getting-started/local-setup).
+3. [Create your signing key and issue a license](/docs/next-license/getting-started/signing-and-first-license).
+4. [Enable Pro in .NET](/docs/next-license/development/dotnet-license-verification) or [Electron](/docs/next-license/development/electron-license-verification).
+5. [Connect Stripe](/docs/next-license/getting-started/connect-stripe-sandbox).
+6. [Verify before shipping](/docs/next-license/getting-started/verify-and-ship).
+
+## What it deliberately does not do
+
+Next License indicates license eligibility; it is not DRM. It does not count running machines, enforce seats, bill on a recurring schedule, or remotely disable licenses already held by customers. A user who controls the app code can patch its checks. See [signing security](/docs/next-license/security/signing-and-update-security).
+
+[Concepts](/docs/next-license/concepts), [features](/docs/next-license/features), [development](/docs/next-license/development), [operations](/docs/next-license/operations) and [security](/docs/next-license/security) cover the rest of the template.

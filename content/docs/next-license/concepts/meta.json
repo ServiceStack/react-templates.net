@@ -1,0 +1,12 @@
+{
+  "title": "Concepts",
+  "icon": "BookOpen",
+  "pages": [
+    "index",
+    "architecture",
+    "feature-entitlements",
+    "trust-and-license-files",
+    "commerce-state"
+  ],
+  "defaultOpen": false
+}
