@@ -91,11 +91,11 @@ All seeded users use the password `p@55wOrd`.
 
 Seed users are created only in Development. Production startup never creates known credentials.
 
-## Add screenshot data
+## Add example data
 
 Populate the selected local database with a repeatable product-tour dataset:
 
-<CopyBlock>{`./scripts/seed-screenshots.sh`}</CopyBlock>
+<CopyBlock>{`./scripts/seed-example-data.sh`}</CopyBlock>
 
 The script creates six example organizations with active, trialing, and past-due subscriptions,
 plus usage history, downloadable example documents, team members, notifications, audit events,
@@ -103,7 +103,7 @@ and Operations Center activity. Sign in as `manager@email.com` for the populated
 customer experience or `admin@email.com` for the cross-customer operator views.
 
 The task is idempotent, follows the database provider selected by `.env`, and refuses to run
-outside Development. Re-run it whenever the date-relative screenshot data needs refreshing.
+outside Development. Re-run it whenever the date-relative example data needs refreshing.
 
 ## Check the application
 

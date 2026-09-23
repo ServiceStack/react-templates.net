@@ -26,7 +26,7 @@ public class Migration1002 : MigrationBase
 
 Use a new migration number in any derived application whose database has been shared, deployed, or contains data that matters. Keep `Up` and `Down` deterministic and avoid network/provider calls.
 
-During active template development, the repository intentionally supports reshaping `Migration1001` and recreating SQLite from empty state. That shortcut must not carry into a shipped customer application.
+During active template development, the repository intentionally supports reshaping `Migration1000` and recreating SQLite from empty state. That shortcut must not carry into a shipped customer application.
 
 ## Identity schema with EF Core
 
