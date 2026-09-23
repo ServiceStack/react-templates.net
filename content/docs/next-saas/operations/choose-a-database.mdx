@@ -12,7 +12,10 @@ guide for a developer setting the template up. This page is the operator referen
 
 The application is already provider-agnostic. `MyApp/Configure.Db.cs` branches on
 `Database:Provider` to configure both OrmLite and EF Core from one connection string, and the
-provider packages for SQLite and PostgreSQL are referenced by default.
+provider packages for SQLite and PostgreSQL are referenced by default. `DB_PROVIDER` supplies
+`Database:Provider` when that setting is absent, so a recognized provider name is written down
+once; an explicit `Database__Provider` still wins, which is how a destination named after
+something other than a provider names its engine.
 
 Only the deployment layer differs between providers, and it is selected with a
 [Kamal destination](https://kamal-deploy.org): the `DB_PROVIDER` repository variable, which
@@ -129,7 +132,8 @@ create schema and do not copy rows between providers.
 
 MySQL and SQL Server ship with the template. Adding a further RDBMS, or a managed database, is additive:
 
-1. add its OrmLite and EF Core packages and a `Database:Provider` branch in `MyApp/Configure.Db.cs`;
+1. add its OrmLite and EF Core packages, a `Database:Provider` branch, and a
+   `ConfigureDb.TryNormalizeProvider` name in `MyApp/Configure.Db.cs`;
 2. add `config/deploy.<provider>.yml` and `.kamal/secrets.<provider>`;
 3. add `config/db/<provider>/pre-deploy.sh` if an accessory must be booted;
 4. add `config/appsettings.deploy.<provider>.example.json` and a branch in `scripts/configure-deployment.sh`;

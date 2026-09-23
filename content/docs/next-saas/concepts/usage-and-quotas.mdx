@@ -35,6 +35,8 @@ A gauge represents a current retained value and can increase or decrease. It nor
 
 Examples: stored objects, storage bytes, seats, active projects.
 
+Customer pages label counters as **Per period** and gauges as **Current total**, and show enforcement modes as **Hard limit**, **Soft limit**, or **Metered overage**. Allowance bars use cobalt below 80% consumption, amber from 80%, and red at 100%.
+
 Public `RecordUsage` rejects gauge changes. Product operations and privileged corrections use explicit adjustments with idempotency, actor, and reason.
 
 ### Reservation

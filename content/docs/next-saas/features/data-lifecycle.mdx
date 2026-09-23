@@ -31,7 +31,7 @@ An export is a point-in-time portability package, not a backup or database resto
 
 Only the Owner can request deletion. The UI explains that the organization, subscription projection, memberships, files, keys, usage, and customer-owned records are removed, while individual user accounts remain available for other organizations.
 
-The request requires the exact organization confirmation and the Owner's current password. Paid subscriptions must first be Free or canceled. The organization enters `PendingDeletion` and becomes read-only during the configured delay. The Owner can cancel before processing starts.
+The request requires the exact organization-name confirmation. It does not ask for the Owner's password because scheduling is reversible throughout the recovery window. Paid subscriptions must first be Free or canceled. The organization enters `PendingDeletion` and becomes read-only during the configured delay. The Owner can cancel before processing starts.
 
 The deletion worker checks legal hold again, deletes tenant data and physical objects, revokes organization API keys, and anonymizes the organization tombstone. It is designed for safe retry.
 

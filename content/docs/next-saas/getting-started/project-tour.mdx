@@ -72,7 +72,8 @@ Configuration follows the `Configure.*.cs` convention:
 - `app/dashboard`, `documents`, `usage`, `billing`, `team`, and `settings` are customer pages.
 - `app/signup` offers Personal and Business account types; `app/pricing` lets visitors switch between their plan catalogs above the plan cards, alongside the monthly/annual billing selector.
 - `app/admin` contains the role-gated, static Operations Center routes.
-- `components/app-shell.tsx` switches between organization navigation and capability-aware Operations Center navigation.
+- `components/app-shell.tsx` switches between organization navigation and capability-aware Operations Center navigation. Below the `lg` breakpoint it shows a bottom tab bar whose **More** sheet holds every page, the organization switcher, and sign-out. It also exports the shared `PageHeading`, `Panel`, `StatusPill`, and threshold-aware `Meter` primitives.
+- `components/brand.tsx` holds the product mark and theme toggle shared by the public site and the application shell.
 - `components/admin-center-page.tsx` composes the shared heading and focused content for each operator route.
 - `components/saas-operations.tsx` owns the route-scoped Customer 360, analytics, queue, retention, support, and audit workflows.
 - `lib/use-saas.tsx` loads and shares organization state without recursive requests.

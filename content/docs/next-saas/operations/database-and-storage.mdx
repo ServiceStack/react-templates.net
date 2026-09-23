@@ -32,6 +32,10 @@ ConnectionStrings__DefaultConnection='Host=db;Database=acme;Username=acme;Passwo
 
 Grant the runtime account only required application privileges. Decide whether migrations use the same account or a separately controlled role.
 
+For local screenshots and product tours, `./scripts/seed-screenshots.sh` writes the same
+Development-only example dataset through OrmLite on every supported provider. It does not alter
+the production migration seed, is safe to rerun, and refuses non-Development environments.
+
 ## Provider setup guides
 
 - [Setup PostgreSQL](/docs/next-saas/operations/setup-postgresql) — provision PostgreSQL 18 with Kamal and replace a disposable SQLite deployment.

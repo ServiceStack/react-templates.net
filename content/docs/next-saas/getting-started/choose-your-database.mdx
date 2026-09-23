@@ -7,9 +7,10 @@ The database provider is a configuration choice rather than a code fork. `MyApp/
 branches on `Database:Provider` to configure both OrmLite and EF Core, so SQLite, PostgreSQL,
 MySQL, and SQL Server all run the same application code.
 
-One variable selects it in both places. `DB_PROVIDER` chooses the database `scripts/dev-db.sh`
-runs on your machine *and* the [Kamal destination](/docs/next-saas/operations/choose-a-database)
-the Release workflow deploys, so you develop against the database you ship.
+One variable selects it everywhere. `DB_PROVIDER` chooses the database `scripts/dev-db.sh` runs
+on your machine, the `Database:Provider` the application uses, *and* the
+[Kamal destination](/docs/next-saas/operations/choose-a-database) the Release workflow deploys,
+so you develop against the database you ship and there is no second setting to keep in step.
 
 Decide before you create data you care about. Switching providers against an empty deployment is
 configuration-only; switching after customers exist needs a separately planned data migration,
@@ -58,8 +59,8 @@ For a server provider this:
 SQLite starts no container. It writes the same file, and `MyApp/App_Data/app.db` is created on
 first run.
 
-It sets `Database__Provider` and `ConnectionStrings__DefaultConnection` in `.env`, replacing
-those assignments in place and leaving the rest of the file alone. The application reads `.env`
+It sets `DB_PROVIDER` and `ConnectionStrings__DefaultConnection` in `.env`, replacing those
+assignments in place and leaving the rest of the file alone. The application reads `.env`
 when it runs in Development, so any `Key__Sub` value there overrides the source-controlled
 settings on your machine only:
 
@@ -71,8 +72,8 @@ MyApp/appsettings.json               deployment-wide template defaults
 
 Switching your machine to PostgreSQL therefore changes nothing a teammate has to review. A
 variable already set in your environment still wins over `.env`, so a one-off
-`Database__Provider=Sqlite dotnet run` keeps working, and nothing in `.env` reaches a
-deployment.
+`DB_PROVIDER=sqlite dotnet run` keeps working, an explicit `Database__Provider` wins over
+`DB_PROVIDER`, and nothing in `.env` reaches a deployment.
 
 Optional overrides:
 
@@ -106,6 +107,13 @@ the wiring at any time:
 To start over on empty data — whichever provider is running:
 
 <CopyBlock>{`ASPNETCORE_ENVIRONMENT=Development ./scripts/reset-dev.sh --yes`}</CopyBlock>
+
+To add repeatable example organizations and activity for screenshots to that same provider:
+
+<CopyBlock>{`./scripts/seed-screenshots.sh`}</CopyBlock>
+
+This Development-only task is idempotent. It uses `manager@email.com` for the populated customer
+experience and makes all six example organizations visible to `admin@email.com`.
 
 ## 4. Point production at the same provider
 
@@ -199,10 +207,13 @@ destination that provisions nothing:
 4. set `DB_PROVIDER=<name>` and put the managed connection string in
    `MyApp/appsettings.Production.json` yourself;
 5. set `DEV_DB_ENGINE` to the engine it actually runs, so `./scripts/dev-db.sh up` still gives you
-   the same engine locally.
+   the same engine locally;
+6. set `Database__Provider` explicitly, because a destination named after a managed instance is
+   not a provider name the application recognizes, so it cannot imply one.
 
 For example, a managed PostgreSQL destination named `postgres-managed` uses
-`DB_PROVIDER=postgres-managed` with `DEV_DB_ENGINE=postgres`.
+`DB_PROVIDER=postgres-managed` with `DEV_DB_ENGINE=postgres` and
+`Database__Provider=PostgreSql`.
 
 ## Troubleshooting
 

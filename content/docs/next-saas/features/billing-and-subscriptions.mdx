@@ -7,7 +7,7 @@ description: "Stripe owns financial state; Next SaaS maintains a local subscript
 
 ## User behavior
 
-Customers choose a published Price compatible with their active Individual or Business account from `/pricing` or `/billing`. `CreateCheckoutSession` returns a Stripe-hosted Checkout URL. After completion, the browser returns to `/billing`, which confirms the Checkout Session, while signed webhooks continue to handle future renewals, failures, portal changes, and cancellation.
+Customers choose a published Price compatible with their active Individual or Business account from `/pricing` or `/billing`. `/pricing` centers however many plans the selected audience has and marks one as recommended: the first self-serve paid plan that offers a trial, or else the first paid plan. Each price shows how it is billed: free, with a trial, billed monthly, or its annual total. `CreateCheckoutSession` returns a Stripe-hosted Checkout URL. After completion, the browser returns to `/billing`, which confirms the Checkout Session, while signed webhooks continue to handle future renewals, failures, portal changes, and cancellation.
 
 The Stripe Customer Portal is the default UI for payment methods, invoices, cancellation, and subscription changes. The template links to Stripe-hosted invoice PDFs rather than generating duplicate tax documents.
 

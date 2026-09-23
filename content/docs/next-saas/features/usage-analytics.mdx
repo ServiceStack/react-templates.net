@@ -12,6 +12,8 @@ description: "Usage analytics turns the same normalized meter events used for en
 
 Both require `analytics.basic`. Advanced breakdowns can be gated with `analytics.advanced` when extending the UI. The requested window is clamped to configured retention.
 
+The `/usage` page shows one card per meter with its allowance, reset date, remaining units, and reservations; selecting a card loads its 30-day series and per-member breakdown, and a meter with no activity in the window shows an empty state instead of a blank chart. The `/dashboard` API activity chart reads the same endpoint for `api.requests` over 14 days.
+
 The `/usage` page should fetch when the organization, meter, or date range changes. Keep request parameters and callback dependencies stable to avoid render-driven request loops.
 
 ![Customer Usage Dashboard and Analytics](/img/next-saas/customer-usage.png)

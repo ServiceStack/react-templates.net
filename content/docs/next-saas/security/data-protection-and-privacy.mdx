@@ -29,7 +29,7 @@ Organization export archives contain concentrated customer data. Authenticate ev
 
 ## Retention and deletion
 
-Global retention defaults can be overridden per organization, and legal hold prevents cleanup/deletion. Organization deletion is delayed, cancelable, password-confirmed, audited, and separate from user-account deletion.
+Global retention defaults can be overridden per organization, and legal hold prevents cleanup/deletion. Organization deletion is Owner-only, exact-name-confirmed, delayed, cancelable, audited, and separate from user-account deletion. Scheduling does not collect the account password; the recovery window is the safety mechanism before deletion processing begins.
 
 Deletion/anonymization requirements for backups, Stripe, email providers, telemetry, support systems, and legal records need a product-specific policy. Immediate removal from an active system may coexist with time-limited protected backup retention.
 
