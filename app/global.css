@@ -24,3 +24,21 @@
 .dark .dark\:border-primary-dark\/5 {
     border-color: rgba(246, 247, 249, 0.05);
 }
+/* Home page showcase animations */
+@theme {
+    --animate-gallery-progress: gallery-progress linear forwards;
+    --animate-dash-flow: dash-flow 1.2s linear infinite;
+    --animate-shimmer: shimmer 3.5s ease-in-out infinite;
+
+    @keyframes gallery-progress {
+        from { transform: scaleX(0); }
+        to { transform: scaleX(1); }
+    }
+    @keyframes dash-flow {
+        to { stroke-dashoffset: -16; }
+    }
+    @keyframes shimmer {
+        0%, 100% { transform: translateX(-120%); }
+        50% { transform: translateX(120%); }
+    }
+}

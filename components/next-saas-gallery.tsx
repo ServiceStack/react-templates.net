@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Building2, ChartColumn, CreditCard, Gauge, Headset, ScrollText, type LucideIcon } from 'lucide-react';
 import { CopyBlock } from '@/app/components/copy-block';
 import { Lightbox } from '@/components/image-lightbox';
 
@@ -54,19 +55,46 @@ const groups: { name: string; tagline: string; shots: Screenshot[] }[] = [
   },
 ];
 
+const highlights: { icon: LucideIcon; label: string }[] = [
+  { icon: Building2, label: 'Multi-tenant orgs' },
+  { icon: CreditCard, label: 'Stripe subscriptions' },
+  { icon: Gauge, label: 'Plans & quotas' },
+  { icon: ChartColumn, label: 'Usage metering' },
+  { icon: ScrollText, label: 'Audit logs' },
+  { icon: Headset, label: 'Operations Center' },
+];
+
+const autoplayMs = 5000;
+
 const allShots = groups.flatMap((g) => g.shots);
 const src = (s: Screenshot) => `/img/next-saas/${s.file}.png`;
 
 export function NextSaasGallery() {
   const [index, setIndex] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
+  const [autoplay, setAutoplay] = useState(true);
+  const [hovering, setHovering] = useState(false);
+  const [inView, setInView] = useState(false);
   const thumbs = useRef<HTMLDivElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
 
   const shot = allShots[index];
   const groupIndex = groups.findIndex((g) => g.shots.includes(shot));
-  const prev = useCallback(() => setIndex((i) => (i - 1 + allShots.length) % allShots.length), []);
-  const next = useCallback(() => setIndex((i) => (i + 1) % allShots.length), []);
+  const prev = useCallback(() => { setAutoplay(false); setIndex((i) => (i - 1 + allShots.length) % allShots.length); }, []);
+  const next = useCallback(() => { setAutoplay(false); setIndex((i) => (i + 1) % allShots.length); }, []);
+  const go = (i: number) => { setAutoplay(false); setIndex(i); };
   const close = useCallback(() => setFullscreen(false), []);
+  const playing = autoplay && inView && !hovering && !fullscreen;
+
+  // auto-advance the tour (driven by the progress bar) while visible, until the user takes over
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) setAutoplay(false);
+    const el = stage.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold: 0.4 });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   // keep the active thumbnail in view
   useEffect(() => {
@@ -100,6 +128,14 @@ export function NextSaasGallery() {
             Launch your <strong className="text-slate-900">multi-tenant B2B SaaS</strong> on .NET 10, ServiceStack and Next.js 16.
             Teams, Stripe subscriptions, plans, quotas and an Operations Center are built in. Take the tour:
           </p>
+          <ul className="flex flex-wrap justify-center gap-2 max-w-3xl mx-auto">
+            {highlights.map((h) => (
+              <li key={h.label} className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm backdrop-blur">
+                <h.icon className="size-4 text-sky-600" />
+                {h.label}
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* Group tabs */}
@@ -110,7 +146,7 @@ export function NextSaasGallery() {
                 key={g.name}
                 role="tab"
                 aria-selected={i === groupIndex}
-                onClick={() => setIndex(allShots.indexOf(g.shots[0]))}
+                onClick={() => go(allShots.indexOf(g.shots[0]))}
                 className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${i === groupIndex
                   ? 'bg-sky-600 text-white shadow-sm'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
@@ -124,20 +160,41 @@ export function NextSaasGallery() {
         <p className="mt-3 text-center text-sm text-slate-500">{groups[groupIndex].tagline}</p>
 
         {/* Stage */}
-        <div className="mt-8 group relative">
-          <div className="absolute -inset-3 rounded-3xl bg-gradient-to-r from-sky-200/60 via-blue-200/40 to-indigo-200/60 blur-2xl pointer-events-none"></div>
-          <div className="relative rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-300/50 overflow-hidden">
-            <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2.5">
+        <div ref={stage} className="mt-8 group relative" onMouseEnter={() => setHovering(true)} onMouseLeave={() => setHovering(false)}>
+          <div className="absolute -inset-6 rounded-[2rem] bg-gradient-to-r from-sky-300/50 via-blue-300/30 to-indigo-300/50 blur-3xl pointer-events-none"></div>
+          <div className="relative rounded-2xl bg-gradient-to-br from-sky-300 via-slate-200 to-indigo-300 p-px shadow-2xl shadow-slate-400/40">
+          <div className="relative rounded-[15px] bg-white overflow-hidden">
+            <div className="relative flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2.5">
               <span className="size-3 rounded-full bg-red-400" />
               <span className="size-3 rounded-full bg-yellow-400" />
               <span className="size-3 rounded-full bg-green-400" />
               <span className="ml-3 truncate text-xs font-medium text-slate-500">{shot.title}</span>
               <span className="ml-auto text-xs text-slate-400 tabular-nums">{index + 1} / {allShots.length}</span>
+              <button
+                type="button"
+                onClick={() => setAutoplay((a) => !a)}
+                aria-label={autoplay ? 'Pause tour' : 'Play tour'}
+                className="rounded p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-700"
+              >
+                {autoplay
+                  ? <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h3v14H7zM14 5h3v14h-3z" /></svg>
+                  : <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>}
+              </button>
+              {/* autoplay progress */}
+              {autoplay && (
+                <span
+                  key={index}
+                  className={`absolute inset-x-0 -bottom-px h-0.5 origin-left bg-gradient-to-r from-sky-500 to-indigo-500 animate-gallery-progress ${playing ? '' : '[animation-play-state:paused]'}`}
+                  style={{ animationDuration: `${autoplayMs}ms` }}
+                  onAnimationEnd={() => setIndex((i) => (i + 1) % allShots.length)}
+                />
+              )}
             </div>
             <button type="button" onClick={() => setFullscreen(true)} aria-label={`View ${shot.title} fullscreen`} className="block w-full cursor-zoom-in bg-white aspect-[16/9]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img key={shot.file} src={src(shot)} alt={shot.title} className="size-full object-contain" />
             </button>
+          </div>
           </div>
           <button type="button" aria-label="Previous screenshot" onClick={prev} className={`${arrow} left-3`}>
             <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
@@ -165,7 +222,7 @@ export function NextSaasGallery() {
               key={s.file}
               type="button"
               data-index={i}
-              onClick={() => setIndex(i)}
+              onClick={() => go(i)}
               aria-label={s.title}
               aria-current={i === index}
               className={`shrink-0 snap-start w-36 md:w-44 rounded-lg overflow-hidden border bg-white transition-all ${i === index

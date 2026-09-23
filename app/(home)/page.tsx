@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { CopyBlock } from '@/app/components/copy-block';
 import ComponentGallery from '@/app/components/component-gallery';
 import { NextSaasGallery } from '@/components/next-saas-gallery';
+import { NextLicenseShowcase } from '@/components/next-license-showcase';
 
 export default function HomePage() {
   const [diagramMode, setDiagramMode] = useState<'Production' | 'Development'>('Production');
@@ -135,6 +136,8 @@ export default function HomePage() {
       </section>
 
       <NextSaasGallery />
+
+      <NextLicenseShowcase />
 
       {/* Body Content - Light/Default Theme */}
       <div className="flex-1 w-full bg-background text-foreground">
