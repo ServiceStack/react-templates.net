@@ -169,7 +169,7 @@ for (const [dir, { title, pages }] of Object.entries(sections)) {
 
 fs.writeFileSync(path.join(destDir, 'meta.json'), JSON.stringify({
   title: 'Next SaaS',
-  description: 'Multi-tenant B2B SaaS Template',
+  description: 'Multi-tenant B2C and B2B Template',
   root: true,
   icon: 'Building2',
   pages: ['index', '---Start Here---', 'getting-started', '---Reference---', ...Object.keys(sections).filter((s) => s !== 'getting-started')],

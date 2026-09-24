@@ -32,7 +32,7 @@ export default function Layout({ children }: LayoutProps<'/docs'>) {
     },
     {
       title: 'Next SaaS',
-      description: 'Multi-tenant B2B SaaS Template',
+      description: 'Multi-tenant SaaS Template',
       url: nextSaasUrl,
       icon: tabIcon(<Building2 />),
       urls: new Set(urls.filter(isNextSaas)),

@@ -125,7 +125,7 @@ export function NextSaasGallery() {
             Next <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600">SaaS</span>
           </h2>
           <p className="text-lg md:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
-            Launch your <strong className="text-slate-900">multi-tenant B2B SaaS</strong> on .NET 10, ServiceStack and Next.js 16.
+            Launch your <strong className="text-slate-900">multi-tenant B2C and B2B SaaS</strong> on .NET 10, ServiceStack and Next.js 16.
             Teams, Stripe subscriptions, plans, quotas and an Operations Center are built in. Take the tour:
           </p>
           <ul className="flex flex-wrap justify-center gap-2 max-w-3xl mx-auto">
