@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { CopyBlock } from '@/app/components/copy-block';
 import { Lightbox } from '@/components/image-lightbox';
+import { LiteYouTube } from '@/components/lite-youtube';
 
 const docs = '/docs/next-license';
 
@@ -81,7 +82,7 @@ const groups: { name: string; screens: Screen[] }[] = [
 const allScreens = groups.flatMap((g) => g.screens);
 const src = (s: Screen) => `/img/next-license/${s.file}.png`;
 
-export function NextLicenseShowcase() {
+export function NextLicenseShowcase({ videoId }: { videoId?: string }) {
   return (
     <section className="relative w-full overflow-hidden border-b border-white/10 bg-[#07120c] text-white">
       {/* Background */}
@@ -111,6 +112,13 @@ export function NextLicenseShowcase() {
             with no activation server to run.
           </p>
         </div>
+
+        {/* Video tour */}
+        {videoId && (
+          <div className="mt-12 mx-auto max-w-5xl overflow-hidden rounded-xl border border-lime-300/20 shadow-2xl shadow-black/50">
+            <LiteYouTube id={videoId} title="Next License tour" />
+          </div>
+        )}
 
         <FlowSteps />
         <LicenseDemo />

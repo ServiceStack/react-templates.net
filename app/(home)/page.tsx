@@ -135,9 +135,9 @@ export default function HomePage() {
 
       </section>
 
-      <NextSaasGallery />
+      <NextSaasGallery videoId="A0CaPJG4_Fs" />
 
-      <NextLicenseShowcase />
+      <NextLicenseShowcase videoId="LtrTxmkP5XE" />
 
       {/* Body Content - Light/Default Theme */}
       <div className="flex-1 w-full bg-background text-foreground">

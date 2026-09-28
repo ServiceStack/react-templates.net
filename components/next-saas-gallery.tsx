@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Building2, ChartColumn, CreditCard, Gauge, Headset, ScrollText, type LucideIcon } from 'lucide-react';
 import { CopyBlock } from '@/app/components/copy-block';
 import { Lightbox } from '@/components/image-lightbox';
+import { LiteYouTube } from '@/components/lite-youtube';
 
 interface Screenshot {
   file: string;
@@ -69,7 +70,7 @@ const autoplayMs = 5000;
 const allShots = groups.flatMap((g) => g.shots);
 const src = (s: Screenshot) => `/img/next-saas/${s.file}.png`;
 
-export function NextSaasGallery() {
+export function NextSaasGallery({ videoId }: { videoId?: string }) {
   const [index, setIndex] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
   const [autoplay, setAutoplay] = useState(true);
@@ -137,6 +138,13 @@ export function NextSaasGallery() {
             ))}
           </ul>
         </div>
+
+        {/* Video tour */}
+        {videoId && (
+          <div className="mt-12 mx-auto max-w-5xl overflow-hidden rounded-xl border border-slate-200 shadow-2xl">
+            <LiteYouTube id={videoId} title="Next SaaS tour" />
+          </div>
+        )}
 
         {/* Group tabs */}
         <div className="mt-12 flex justify-center">
