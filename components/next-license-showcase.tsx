@@ -84,7 +84,7 @@ const src = (s: Screen) => `/img/next-license/${s.file}.png`;
 
 export function NextLicenseShowcase({ videoId }: { videoId?: string }) {
   return (
-    <section className="relative w-full overflow-hidden border-b border-white/10 bg-[#07120c] text-white">
+    <section id="next-license" className="relative w-full overflow-hidden border-b border-white/10 bg-[#07120c] text-white">
       {/* Background */}
       <div
         className="absolute inset-0 pointer-events-none opacity-40 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]"

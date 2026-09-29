@@ -107,7 +107,7 @@ export function NextSaasGallery({ videoId }: { videoId?: string }) {
   const arrow = 'absolute top-1/2 -translate-y-1/2 z-10 rounded-full border border-slate-200 bg-white/95 p-2.5 text-slate-700 shadow-lg opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-sky-600 hover:border-sky-300 transition-opacity';
 
   return (
-    <section className="relative w-full overflow-hidden border-b border-slate-200 bg-gradient-to-b from-sky-50 via-white to-white">
+    <section id="next-sass" className="relative w-full overflow-hidden border-b border-slate-200 bg-gradient-to-b from-sky-50 via-white to-white">
       {/* Grid Pattern */}
       <div
         className="absolute inset-0 pointer-events-none opacity-60 [mask-image:linear-gradient(to_bottom,black,transparent_70%)]"
