@@ -20,15 +20,19 @@ A job is a registered command with a small request payload:
 ```csharp
 public class DeleteStoredFileWork
 {
-    public string FileId { get; set; } = "";
+    public string WorkspaceId { get; set; } = default!;
+    public string FileId { get; set; } = default!;
 }
 
 [Worker("storage")]
-public class DeleteStoredFileCommand(...) : AsyncCommand<DeleteStoredFileWork>
+public class DeleteStoredFileCommand(IDbConnectionFactory dbFactory, ...) : AsyncCommand<DeleteStoredFileWork>
 {
     protected override async Task RunAsync(DeleteStoredFileWork request, CancellationToken token)
     {
-        // Reload the file and current organization state, then act idempotently.
+        // Confine the connection to the organization before reading anything
+        using var db = dbFactory.OpenForWorkspace(request.WorkspaceId, "file-deletion-job");
+        var row = db.SingleById<StoredFile>(request.FileId);   // null if the file is not this organization's
+        // Reload current state, then act idempotently.
     }
 }
 ```
@@ -36,12 +40,15 @@ public class DeleteStoredFileCommand(...) : AsyncCommand<DeleteStoredFileWork>
 Register the command in `Configure.BackgroundJobs.cs`, then enqueue it through `IBackgroundJobs`:
 
 ```csharp
-jobs.EnqueueCommand<DeleteStoredFileCommand>(new DeleteStoredFileWork {
+jobs.EnqueueForWorkspace<DeleteStoredFileCommand>(scope.Workspace.Id, new DeleteStoredFileWork {
+    WorkspaceId = scope.Workspace.Id,
     FileId = row.Id,
 });
 ```
 
-Pass stable identifiers, not a serialized authorization decision or mutable customer record. Workers must reload current state.
+`EnqueueForWorkspace()` sets the job's `TenantId` to its organization, so an organization's jobs can be found in the jobs dashboard.
+
+Pass the organization and stable identifiers, not a serialized authorization decision or mutable customer record. Workers must reload current state.
 
 ## Worker queues
 
@@ -55,7 +62,7 @@ The host registers recurring work after ServiceStack initialization:
 | --- | --- | --- |
 | `ExpireUsageReservationsCommand` | Hourly | Release abandoned admission capacity |
 | `BuildUsageRollupsCommand` | Hourly | Rebuild daily usage projections |
-| `BuildSaasDailySnapshotCommand` | Hourly | Capture operator business metrics |
+| `BuildSaasDailySnapshotCommand` | Hourly | Record the day's operator metrics and MRR/ARR history |
 | `QueueQuotaNotificationsCommand` | Hourly | Turn quota thresholds into notification intents |
 | `ProcessDueWorkspaceLifecyclesCommand` | Hourly | Enqueue delayed organization operations |
 | `ExpireDataExportsCommand` | Hourly | Delete expired archive objects and retain expiry evidence |
@@ -69,9 +76,9 @@ Recurring commands must be safe when invocations overlap or a prior run partiall
 For important workflows, the database row is the source of truth and the queue is a delivery mechanism:
 
 1. Authorize the request.
-2. Persist operation, status, actor, and idempotency/deduplication key.
+2. Persist operation, status, user, and idempotency/deduplication key.
 3. Commit the transaction.
-4. Enqueue the row ID.
+4. Enqueue the organization and row ID.
 5. Have the worker reload and claim current state.
 
 This pattern is used for Stripe inbox events, notifications, stored files, and workspace lifecycle requests. A periodic scanner can re-enqueue due persisted work if an enqueue was lost.
@@ -95,6 +102,25 @@ Operator retry APIs enqueue the same persisted operation rather than inventing a
 ## Tenant and authorization safety
 
 Authorization happens when the customer requests an operation, but the worker still reloads current tenant state. A queued identifier is not trusted input.
+
+A job is not run for a request, so it opens its own connection and says whether it is confined to an organization. A job that is given only a row ID, and looks the row up to find its organization, trusts that ID completely. So work for one organization carries the organization in its payload, and the command opens a connection confined to it before it reads anything:
+
+```csharp
+using var db = dbFactory.OpenForWorkspace(request.WorkspaceId, "lifecycle-job");
+```
+
+A request for another organization's row is then treated as if it does not exist, and nothing the command does afterwards can reach another organization, however it is written. The second argument is the job's name, which is recorded in the audit columns of the rows it writes.
+
+A job that sweeps every organization opens its connection with `dbFactory.OpenAcrossWorkspaces("retention-job")` and keeps explicit `WorkspaceId` conditions. `ArchitectureGuardTests` limits it to an allow-list of reviewed files, and fails when a connection is opened with `dbFactory.Open()`, so a job cannot be left unconfined by forgetting a call.
+
+Jobs that process every organization have two shapes:
+
+| Shape | When | Example |
+| --- | --- | --- |
+| One organization at a time, on a connection confined to it | The work reads and writes an organization's rows | `BuildUsageRollupsCommand` lists the organizations with recent usage, then builds each one's rollups on its own connection. Stripe events, subscription reconciliation and quota notifications work the same way |
+| One statement across organizations, with explicit conditions | A sweep by a condition | `ExpireUsageReservationsCommand`, `ApplyDataRetentionCommand` |
+
+The first also bounds memory by the largest organization rather than the total.
 
 Recheck policy that may change during a delay. Organization deletion checks legal hold at request time and again in the worker. File jobs derive their object key from the organization-owned database row rather than accepting it from the browser.
 
@@ -124,7 +150,7 @@ Do not use in-memory timers or fire-and-forget tasks for customer workflows. The
 
 ## Adding a command
 
-1. Define a minimal request containing stable IDs.
+1. Define a minimal request containing the organization and stable IDs.
 2. Implement `AsyncCommand<T>` and choose a worker queue if needed.
 3. Register it with dependency injection.
 4. Persist business intent before enqueueing.
@@ -137,6 +163,7 @@ Do not use in-memory timers or fire-and-forget tasks for customer workflows. The
 ## Common mistakes
 
 - Passing an entire customer object into a job and trusting its stale status.
+- Opening a connection in a job for one organization without confining it.
 - Treating enqueue success as business completion.
 - Performing provider work without idempotency.
 - Making retries duplicate usage or notifications.

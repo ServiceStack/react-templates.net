@@ -23,7 +23,37 @@ description: "Organization lifecycle tools cover portable exports, delayed delet
 
 Export requests enqueue a background job that creates a ZIP containing a manifest, structured tenant records, and available files. The artifact is tenant-bound and expires after `Saas.ExportExpiryDays`. An expiry job removes the object and marks its metadata expired; later retention removes old lifecycle history.
 
-An export is a point-in-time portability package, not a backup or database restore format. Extend the manifest whenever a derived product adds customer-owned tables or objects.
+An export is a point-in-time portability package, not a backup or database restore format.
+
+### Every table is covered by default
+
+A hand-written list of tables to export or delete is right the day it is written and wrong the day a table is added. `WorkspaceData` finds every table implementing `IHasWorkspaceId`, so a new tenant-owned table is exported and deleted with its organization without any change. Leaving a table out is the exception, and has to say why:
+
+```csharp
+public static readonly IReadOnlyDictionary<Type, string> NotExported = new Dictionary<Type, string> {
+    [typeof(UsageReservation)] = "Short-lived holds on quota while an operation is in progress",
+    [typeof(SupportNote)] = "Operator notes about the customer",
+    // ...
+};
+
+public static readonly IReadOnlyDictionary<Type, string> KeptAfterDeletion = new Dictionary<Type, string> {
+    [typeof(WorkspaceLifecycleRequest)] = "The record of the deletion that was requested and completed",
+    [typeof(SaasAuditEvent)] = "The audit trail, which is kept until its retention period ends",
+};
+```
+
+```csharp
+// In the lifecycle command, on a connection confined to the organization
+var tables = WorkspaceData.ExportJson(db);      // each table's rows, for the export manifest
+var deleted = WorkspaceData.DeleteAll(db);      // rows deleted, by table, recorded in the audit event
+```
+
+- Both refuse to run on a connection that is not confined to an organization.
+- Tables are deleted in an order worked out from their `[References]`, so rows go before the rows they reference.
+- Columns that describe how a row is stored or secured are removed from the export, such as storage keys and invitation token hashes.
+- The organization's audit log is exported, and kept after deletion until its retention period ends.
+
+Extend the export only when a derived product adds customer-owned objects outside these tables, such as files in another store.
 
 ![Export Artifact Status and Checksum](/img/next-saas/export-status.png)
 
@@ -56,7 +86,7 @@ Ownership transfer targets an active member by user ID and atomically changes ro
 
 ## Verify
 
-Inspect an export, download it only from the owning organization, expire it, and confirm object cleanup. Test deletion validation, read-only delay, cancellation, paid-plan blocking, legal hold, retry, API-key revocation, user-account survival, ownership transfer, and last-owner safeguards.
+Inspect an export, download it only from the owning organization, expire it, and confirm object cleanup. `WorkspaceDataTests` checks that deleting one organization leaves every table of another untouched, and that an export contains every exported table and no other organization's ID. Test deletion validation, read-only delay, cancellation, paid-plan blocking, legal hold, retry, API-key revocation, user-account survival, ownership transfer, and last-owner safeguards.
 
 ## Related documentation
 

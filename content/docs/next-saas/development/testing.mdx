@@ -13,7 +13,7 @@ Run all .NET tests from the repository root:
 
 Use fast in-memory SQLite tests for policy and persistence behavior. Seed only the minimum organization, membership, plan version, subscription, quota, and period needed for the scenario. Assert stable HTTP error codes as well as status.
 
-For concurrency-sensitive aggregate changes, set `NEXT_SAAS_TEST_POSTGRES` to an administrative PostgreSQL connection. The integration fixture creates and drops an isolated schema and is skipped when the variable is absent.
+For concurrency-sensitive aggregate changes, set `TEST_POSTGRES_CONNECTION` to an administrative PostgreSQL connection. The integration fixture creates and drops an isolated schema and is skipped when the variable is absent.
 
 High-value backend cases include:
 
@@ -25,7 +25,38 @@ High-value backend cases include:
 - support-access expiry/redaction and lifecycle legal hold;
 - audit redaction and retention boundaries.
 
-`ArchitectureGuardTests` protects template-wide invariants that are easy to accidentally weaken.
+Tests that open their own connections set audit columns the same way as the application, through the `OnOpenConnection` hook registered in `AssemblySetup`. Use `.SetUserId("user-1")` to write as a user and `.ForWorkspace(id)` to confine a connection to an organization.
+
+| Test class | Protects |
+| --- | --- |
+| `TenantIsolationTests` | Every table implementing `IHasWorkspaceId` is confined to its organization for selects, updates, deletes, and inserts, and a connection without an organization throws |
+| `WorkspaceAccessTests` | A request has to say which organization it is for and be a member of it, and suspended, read-only, and pending-deletion organizations allow only the access they should |
+| `WorkspaceDataTests` | Deleting one organization leaves every table of another untouched, an export contains every exported table and no other organization's ID, and file keys are checked per organization |
+| `MaintenanceJobTests` | Jobs that process every organization only change the rows they should |
+| `SaasAuditRuleTests` | Audit columns are set by the connection, application values are replaced, and `CreatedBy` survives an update by another user |
+| `ArchitectureGuardTests` | Template-wide invariants that are easy to accidentally weaken |
+
+`ArchitectureGuardTests` fails when:
+
+- a table created by the migration is not classified, or a table classified as `tenantOwned` does not implement `IHasWorkspaceId`;
+- a tenant-owned table has no index that starts with `WorkspaceId`;
+- a table has audit columns without deriving from `SaasAuditBase`;
+- a Request DTO with a `WorkspaceId` does not implement `IRequireWorkspace`;
+- an API that API keys can call is not on the allow-list, or is not for an organization;
+- `AcrossWorkspaces()`, `OpenAcrossWorkspaces()`, `WithoutFilters()`, or raw SQL is used outside its allow-list of reviewed files;
+- raw SQL is not written with `Sql.Fmt()`;
+- a connection is opened with `dbFactory.Open()` instead of `OpenForWorkspace()` or `OpenAcrossWorkspaces()`.
+
+Every test that reads source code is in this fixture. The others are checked from the compiled types.
+
+The isolation, export, deletion, and job tests run on SQLite, and on PostgreSQL when `TEST_POSTGRES_CONNECTION` is set, each in a schema of its own.
+
+### What the tests do not cover
+
+- **An API whose Request DTO forgets `IRequireWorkspace`.** It fails on its first request, so call each new API once against a running application.
+- **Connections opened by plugins without the request.** They are not confined. See [Tenant isolation](/docs/next-saas/security/tenant-isolation#what-the-connection-does-not-cover).
+- **API-key requests end to end.** Authentication happens in ASP.NET Core before a service runs, so call an API with a key against a running application.
+- **SQL Server and MySQL.** The tests run on SQLite and PostgreSQL only.
 
 ![Automated Unit and Integration Tests](/img/next-saas/reference-module-tests.png)
 

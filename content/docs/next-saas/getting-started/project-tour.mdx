@@ -100,7 +100,7 @@ An architecture test fails when a new table is not classified. Update the releva
 | Initial clean-database plans | `MyApp/plans.json` |
 | Runtime plan price, quota, trial, or feature | `/admin/plans` **Plans** tab, persisted in the RDBMS |
 | Coupon or promotion code | `/admin/plans` **Coupons** tab, owned by Stripe and locally audited |
-| Customer contract exception | `/admin/customers`, persisted with actor and reason |
+| Customer contract exception | `/admin/customers`, persisted with user and reason |
 | API contract | `MyApp.ServiceModel` |
 | Business and authorization policy | `MyApp.ServiceInterface` |
 | Customer or operator experience | `MyApp.Client` |

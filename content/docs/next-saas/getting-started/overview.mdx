@@ -52,7 +52,7 @@ The template deliberately separates three kinds of decisions:
 
 1. **Deployment-wide behavior** belongs in JSON configuration, such as enabled currencies, retention defaults, trial policy, and quota warnings.
 2. **Plan behavior** belongs in the RDBMS and is managed from the **Plans** tab at `/admin/plans`, such as prices, quotas, features, and trial duration.
-3. **Customer-specific behavior** belongs in the RDBMS with an actor and reason, such as negotiated entitlements, retention exceptions, and legal holds.
+3. **Customer-specific behavior** belongs in the RDBMS with a user and reason, such as negotiated entitlements, retention exceptions, and legal holds.
 
 This separation keeps global policy reviewable while allowing safe runtime administration.
 

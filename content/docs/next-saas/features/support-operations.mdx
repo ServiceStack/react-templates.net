@@ -37,6 +37,7 @@ Navigation visibility is a convenience, not authorization. Every API independent
 
 - `GET /saas/admin/customers` searches by organization, member email, Stripe identifiers, or API-key fingerprint.
 - `GET /saas/admin/customers/{WorkspaceId}` returns role-filtered organization, subscription, entitlements, usage, members, files, notes, audit, notifications, lifecycle, support, and retention context.
+- `GET /saas/admin/customer-health` scores each customer's health, least healthy first, with the signals behind it; see [customer health](/docs/next-saas/features/usage-analytics#customer-health).
 - `GET /saas/admin/operations` returns failed queues, pending reservations, lifecycle work, support grants, retention runs, configuration readiness, and platform capabilities.
 - `POST /saas/admin/support-notes` appends internal customer context.
 

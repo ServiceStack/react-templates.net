@@ -27,6 +27,8 @@ Support projections remove billing identifiers unless the role can manage billin
 
 Support access is read-only. Product mutation endpoints still require organization membership or a separate platform capability; a support grant must not be treated as impersonation.
 
+Platform APIs that work on one customer, including Customer 360 and support notes, confine their request's database connection to that organization with `RequireCustomer(workspaceId)` before reading anything. The grant is then looked up within that organization, and the rest of the API can only reach that customer's rows.
+
 ![Customer 360 Platform Inspection](/img/next-saas/customer-360.png)
 
 Grant, start, denied use, end, revoke, expiry-sensitive access, notes, and associated operator actions should be correlated through audit and request IDs. Reasons and notes must not contain credentials or unnecessary personal data.

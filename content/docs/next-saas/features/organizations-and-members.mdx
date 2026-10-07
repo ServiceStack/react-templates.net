@@ -10,7 +10,7 @@ description: "Organizations isolate customer data, subscriptions, quotas, files,
 - Registration offers Personal and Business. Personal creates a private, single-member workspace; Business requires an organization name and starts with an owner membership. The internal account kind for Personal is `Individual`.
 - First SaaS access can still provision an Individual workspace when personal workspaces are enabled.
 - Users can create another organization with independent data and billing.
-- The application shell switches the active organization explicitly.
+- The application shell switches the organization of its browser tab explicitly, so different tabs can work in different organizations.
 - Owners and Admins invite members and manage non-owner roles.
 - Personal accounts cannot invite or accept team members; create a Business organization to collaborate.
 - New Business organizations start on shared Free with one seat; a multi-seat Business plan is needed before inviting teammates.
@@ -58,7 +58,7 @@ Invitations bind a role and normalized email to a random, one-way-hashed token a
 
 ## Isolation and authorization
 
-Every resource lookup includes the resolved organization. Switching active organization refreshes shared customer state. API keys remain bound to the organization in which they were created and ignore browser selection changes.
+Every API for an organization takes its `WorkspaceId`, and every resource lookup is confined to that organization once the caller is checked to be a member of it. Switching organization reloads the tab's customer state. API keys remain bound to the organization in which they were created and ignore browser selection changes.
 
 ## Failure modes
 
@@ -68,7 +68,7 @@ Every resource lookup includes the resolved organization. Switching active organ
 - Member changes Owner through ordinary role API: reject.
 
 ![Owner Protection and Transfer](/img/next-saas/owner-protection.png)
-- Deleted/disabled membership accesses data: resolver denies it.
+- Deleted/disabled membership accesses data: the membership check when the request's connection opens denies it.
 
 ## Extension points
 

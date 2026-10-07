@@ -14,7 +14,7 @@ Select the behavior before writing code:
 | `Counter` | accepted units accumulate, such as API requests |
 | `Gauge` | current quantity can rise and fall, such as bytes stored |
 | `ReservableCounter` | admission happens before fallible work, such as an upload |
-| `BillingPeriod` | paid usage resets with projected Stripe boundaries |
+| `BillingPeriod` | paid usage resets with projected Stripe boundaries, and monthly in UTC while `FreeFallback` applies |
 | `CalendarMonth` | usage resets monthly in UTC |
 | `Never` | lifetime/current state does not periodically reset |
 
@@ -50,7 +50,9 @@ Add the meter and included units to empty-state `plans.json`, or edit and publis
 
 ## 4. Record simple accepted work
 
-For a single transactional operation, call `ISaasManager.RecordUsage` with organization, subscription, actor, positive units, and a stable idempotency key. Record only after the product mutation can commit consistently, and use the same database transaction when possible.
+For a single transactional operation, call `ISaasManager.RecordUsage` with organization, subscription, user, positive units, and a stable idempotency key. Record only after the product mutation can commit consistently, and use the same database transaction when possible.
+
+`RecordUsage` runs in your transaction when you call it inside one, and it's your transaction that's run again after a deadlock. Use `db.RunInTransaction()` instead of `db.OpenTransaction()` to retry it, and keep anything outside the database, such as sending email, after it commits, as the transaction can run more than once.
 
 The public example endpoint is `POST /saas/usage`, protected by `api.access`.
 

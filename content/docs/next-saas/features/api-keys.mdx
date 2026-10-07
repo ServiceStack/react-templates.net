@@ -7,7 +7,7 @@ description: "API keys provide organization-bound programmatic access without ex
 
 ## Customer workflow
 
-An authenticated member selects an organization, opens **Settings → API keys**, and creates a named credential. The raw key is displayed once. Later views show only its fingerprint and metadata, so a lost key must be replaced rather than recovered.
+An authenticated member opens **API keys** in an organization and creates a named credential for it. The management page takes its organization from its link (`?workspaceId=`), and lets the member choose one of their organizations when it is missing. The raw key is displayed once. Later views show only its fingerprint and metadata, so a lost key must be replaced rather than recovered.
 
 The management page intentionally asks only for a name and optional expiry. The server assigns the template's standard scopes: `usage:read`, `usage:write`, and `workspace:read`.
 
@@ -19,9 +19,9 @@ The management page intentionally asks only for a name and optional expiry. The 
 
 The filters:
 
-- bind a new key to the active organization through `RefIdStr`;
+- require a new key to say which organization it is for in its `RefIdStr`, and check the caller is a member of it;
 - require the `api.access` entitlement;
-- filter lists to the active organization;
+- update and delete a key in the organization it was created for;
 - prevent moving a key between organizations;
 - require an interactive session to create, update, or delete credentials;
 - prevent an API key from managing other keys;
@@ -33,7 +33,38 @@ Use the generated ServiceStack DTOs for the exact API-key routes and payloads. T
 
 ## Authentication and isolation
 
-Send a credential using the ServiceStack bearer or API-key authentication supported by `ApiKeysFeature`. The organization is resolved from the stored key, not from the browser's active selection or a caller-supplied organization ID.
+Send a credential using the ServiceStack bearer or API-key authentication supported by `ApiKeysFeature`. `AddApiKeyAuth()` in `Program.cs` authenticates the request as the key's user, without the user's roles. The request is for the organization the key was created for: it does not need to send a `WorkspaceId`, and is rejected if it sends another organization's.
+
+Authenticating as the user means a key could call anything the user can, including deleting the organization. So APIs are closed to API keys unless they name the scope they need with ServiceStack's `[ValidateHasScope]`:
+
+```csharp
+[ValidateIsAuthenticated]
+[ValidateHasScope("usage:write")]
+[Route("/saas/usage", "POST")]
+public class RecordUsage : IPost, IReturn<RecordUsageResponse>, IRequireWorkspace
+```
+
+| Request sent with an API key | Result |
+| --- | --- |
+| The API has `[ValidateHasScope]` and the key has the scope | Runs as the key's user, confined to the key's organization |
+| The request's `WorkspaceId` is another organization's | `403 WorkspaceAccessDenied` |
+| The key does not have the scope | `403 Forbidden` |
+| The API has no `[ValidateHasScope]` | `403 InteractiveSessionRequired` |
+| The key has no organization | `403 OrganizationKeyRequired` |
+| The key's user is no longer a member of its organization | `403 WorkspaceAccessDenied` |
+| Unknown, cancelled, or expired key | `401` |
+
+`[ValidateHasScope]` checks the request's `scope` claims. A key has the scopes it was created with, and a signed-in user has all of them, which `AdditionalUserClaimsPrincipalFactory` adds at sign-in from `SaasApiKeys.Scopes`. So one attribute covers both, and an API is called the same way with either.
+
+`SaasApiKeyGuard` closes APIs without a scope to keys, for every request in one place. Managing members, billing, credentials, and the organization itself always needs a signed-in user. A guard test keeps the APIs a key can call, and their scopes, on an allow-list.
+
+The built-in key management APIs say which organization a key is for explicitly too:
+
+| API | Organization |
+| --- | --- |
+| `CreateUserApiKey` | Its `RefIdStr`, which is required |
+| `UpdateUserApiKey`, `DeleteUserApiKey` | The organization the key was created for |
+| `QueryUserApiKeys` | The user's own keys, of every organization they have one for |
 
 ![Programmatic API Request with Bearer API Key](/img/next-saas/api-request.png)
 
@@ -41,7 +72,14 @@ Revoked, expired, or cross-organization credentials fail before product data is 
 
 ## Rate limiting
 
-`Saas.ApiKeyRequestsPerMinute` sets a per-process, fixed-window limit keyed by organization and a SHA-256 hash of the credential. Rejection returns HTTP `429` and `Retry-After`.
+A limit on each API key is a limit an organization can raise by creating keys. `SaasApiRateLimiter` counts each request against its key and against its organization, in per-process fixed one-minute windows, and accepts it only if both have capacity. Rejection returns HTTP `429` and `Retry-After`.
+
+| Setting | Limits |
+| --- | --- |
+| `Saas.ApiKeyRequestsPerMinute` | Each API key |
+| `Saas.OrganizationApiRequestsPerMinute` | An organization, across all of its keys |
+
+The limiter runs after authentication. A request with an invalid, cancelled, or expired key is rejected with `401` before it, so it is not counted; limit those at your gateway or with ASP.NET Core rate limiting if key guessing is a concern. A key the limiter is given without an organization shares one window per client address, so the limiter cannot grow without bound. Quotas follow the same rule: usage is metered per organization, never per user or per key.
 
 The included limiter is suitable for a single application instance. Replace `SaasApiRateLimiter` with a shared Redis or gateway-backed implementation before horizontally scaling.
 
@@ -54,7 +92,7 @@ The included limiter is suitable for a single application instance. Replace `Saa
 
 ## Verify
 
-Create a key in organization A, copy it once, call an allowed API, and confirm it appears in that organization's list. Switch to organization B and confirm it is absent. Test expiry, revocation, the rate limit, missing `api.access`, and an API-key attempt to create another key.
+Create a key in organization A, copy it once, call an allowed API, and confirm it appears in that organization's list. Open organization B and confirm it is absent, and that the key is rejected when it sends organization B's `WorkspaceId`. Test expiry, revocation, the rate limit, missing `api.access`, and an API-key attempt to create another key.
 
 ## Related documentation
 

@@ -1,6 +1,6 @@
 ---
 title: "Audit logs"
-description: "The SaaS audit trail records security, billing, lifecycle, support, and administrative decisions with actor and tenant context."
+description: "The SaaS audit trail records security, billing, lifecycle, support, and administrative decisions with user and tenant context."
 ---
 
 [Support operations](/docs/next-saas/features/support-operations)
@@ -12,7 +12,7 @@ description: "The SaaS audit trail records security, billing, lifecycle, support
 | Organization | `GET /saas/audit`, `GET /saas/audit/export` |
 | Platform operators | `GET /saas/admin/audit`, `GET /saas/admin/audit/export` |
 
-Organization audit access requires the `audit.read` entitlement. Platform search supports organization, category, action, outcome, date range, and free text, with authorization enforced by the service.
+Organization audit access requires the `audit.read` entitlement. `GET /saas/audit` returns the newest events first, and pages by the last event seen: pass the `Id` of the last event as `AfterId` to get the events after it. The audit log only grows, so this stays fast however far back a customer pages, and events recorded in the meantime do not shift later pages. Platform search supports organization, category, action, outcome, date range, and free text, with authorization enforced by the service.
 
 Organization members use `/audit`. Platform Admin users search and export the cross-organization audit stream from `/admin/security`.
 
@@ -20,7 +20,23 @@ Organization members use `/audit`. Platform Admin users search and export the cr
 
 ## Event shape
 
-`SaasAuditEvent` contains organization, category, action, outcome, actor, subject, request correlation, network/client context, timestamp, and sanitized metadata. Use registered, stable action names so filters, exports, alerts, and downstream integrations do not depend on prose.
+The audit log is two tables, because a table's rows either all belong to an organization or none do:
+
+| Table | Rows | Organization |
+| --- | --- | --- |
+| `SaasAuditEvent` | What happened in one organization, by its members, operators, or the system | Required `WorkspaceId` |
+| `PlatformAuditEvent` | What operators did that is not about an organization: plans, coupons, Stripe events | None |
+
+```csharp
+// On a connection confined to an organization, the event gets it
+Db.Insert(new SaasAuditEvent { Category = "workspace", Action = "profile.updated", UserId = userId });
+
+Db.Insert(new PlatformAuditEvent { Category = "plan", Action = "version.published", UserId = userId });
+```
+
+An organization's log is an ordinary tenant-owned table, so it is isolated, exported, and retained like every other, and the customer's audit page cannot show another organization's events. `SaasAudit` rejects an event written to the wrong log. Operators see both in one list, which queries the two tables and merges them.
+
+Both contain category, action, outcome, user, subject, request correlation, network/client context, timestamp, and sanitized metadata. Use registered, stable action names so filters, exports, alerts, and downstream integrations do not depend on prose.
 
 ## Recording events
 
@@ -40,7 +56,7 @@ Audit history supports product investigation but is not automatically a regulate
 
 1. choose an existing category or register a deliberate new one;
 2. use a stable past-tense action;
-3. record organization, actor, subject, outcome, and request ID;
+3. record organization, user, subject, outcome, and request ID;
 4. add only allow-listed, sanitized metadata;
 5. test success, denial, and cross-tenant behavior;
 6. include the new event in relevant retention/export reviews.

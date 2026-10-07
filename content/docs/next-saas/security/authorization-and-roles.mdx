@@ -39,7 +39,7 @@ Platform membership does not create organization membership. Support users need 
 For a customer operation:
 
 1. authenticate the user or API credential;
-2. resolve the organization and active membership;
+2. check the caller is an active member of the organization the request is for;
 3. evaluate workspace/subscription access mode;
 4. require the relevant organization role;
 5. require commercial feature entitlement;

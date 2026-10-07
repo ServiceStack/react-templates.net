@@ -68,7 +68,7 @@ An override is active when its optional start has arrived and its optional expir
 
 ## Server and client enforcement
 
-Use `[RequiresFeature("feature.key")]` on the ServiceStack request DTO for normal feature enforcement. The global request filter resolves the current organization, subscription, and effective entitlement.
+Use `[RequiresFeature("feature.key")]` on the ServiceStack request DTO for normal feature enforcement. The global request filter checks the effective entitlement of the organization the request is for, from its subscription.
 
 ```csharp
 [ValidateIsAuthenticated]
@@ -111,7 +111,7 @@ Overrides are meant for negotiated contracts, temporary enablement, incident rec
 Every override should:
 
 - use a registered key;
-- record a business reason and actor;
+- record a business reason and user;
 - have an expiry when the exception is temporary;
 - appear in Customer 360 diagnostics;
 - produce an audit event on creation and removal.

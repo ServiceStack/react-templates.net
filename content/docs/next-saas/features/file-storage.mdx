@@ -14,7 +14,7 @@ description: "The Acme sample stores ordinary files to demonstrate feature gates
 | Download | `GET /saas/files/{Id}` |
 | Delete | `DELETE /saas/files/{Id}` |
 
-Upload, download, and delete require the `files.basic` entitlement. Every lookup is constrained to the active organization. Upload is multipart, carries one file, and requires an `IdempotencyKey`.
+Upload, download, and delete require the `files.basic` entitlement. Every API takes the `WorkspaceId` of the organization it is for, and every lookup is confined to it. Upload is multipart, carries one file, and requires an `IdempotencyKey`.
 
 `/documents` accepts a multiple-file selection and files dropped onto the list, and sends one
 request per file, each with its own idempotency key. Keeping one file per request keeps one
@@ -28,6 +28,20 @@ hard limit meant to reject exactly one operation.
 ## Storage model
 
 `StoredFile` keeps tenant-safe metadata in the RDBMS. `IFileStore` stores bytes behind an opaque object key and exposes write, read, delete, and existence operations. `LocalFileStore` is the default implementation and writes beneath `FileStorage.RootPath`.
+
+A database row is confined by its connection. A file is not: the store takes a key and returns bytes. So keys are created and checked by a store for one organization:
+
+```csharp
+var workspaceFiles = files.ForWorkspace(scope.Workspace.Id);
+
+var key = workspaceFiles.NewFileKey();                    // workspaces/{id}/files/{opaque id}
+await workspaceFiles.WriteAsync(key, stream, maximumBytes);
+await workspaceFiles.OpenReadAsync(row.ObjectKey);        // throws if the key is not this organization's
+```
+
+- Use `files.ForWorkspace(id)`, not `IFileStore` directly.
+- Keys are opaque. The customer's file name is metadata, never part of a path.
+- A key from another organization, or one with `..` in it, is rejected before the store is asked.
 
 Do not expose physical paths to customers or use user-provided filenames as object keys. To adopt S3, Azure Blob Storage, or another provider, replace `IFileStore` while retaining metadata, organization isolation, and cleanup semantics.
 

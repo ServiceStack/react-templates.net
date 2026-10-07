@@ -20,7 +20,7 @@ description: "Security in Next SaaS is layered across ASP.NET Core Identity, Ser
 ## Security invariants
 
 - The browser is never an authorization boundary.
-- Every customer-owned lookup is constrained by resolved organization context.
+- Every customer-owned lookup is confined to the organization the request is for, after the caller is checked to be a member of it.
 - Organization roles and platform roles are separate.
 - Stripe and SMTP secrets never enter the frontend bundle.
 - Published plan state and local subscription projections drive access without live provider calls.

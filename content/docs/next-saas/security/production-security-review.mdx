@@ -18,7 +18,7 @@ description: "Use this checklist as the final template-to-product review. It is 
 ## Authorization and tenants
 
 - [ ] Every mutation has a documented organization or platform permission.
-- [ ] Every tenant-owned query includes resolved `WorkspaceId`.
+- [ ] Every tenant-owned table implements `IHasWorkspaceId`, and every API that uses one implements `IRequireWorkspace`.
 - [ ] Cross-tenant list/read/write/delete/export/job tests exist.
 - [ ] Feature gates and quotas are enforced server-side.
 - [ ] Platform projections are role-filtered and support access is off unless intentionally enabled.

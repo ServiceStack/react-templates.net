@@ -40,10 +40,17 @@ Access modes are:
 - `Full` — normal paid or trial access;
 - `Grace` — temporary access during the configured past-due grace window;
 - `ReadOnly` — product reads remain available but writes are blocked;
-- `FreeFallback` — resolve features and quotas from the published Free plan;
+- `FreeFallback` — resolve features and quotas from the published Free plan, with billing-period counters
+  counted in calendar months like the Free plan's;
 - `Suspended` — block product access.
 
 `Saas.PastDueGraceDays` and `Saas.AfterGraceAccessMode` define global policy. Subscription transitions never delete customer data.
+
+Each change to what a subscription is billed, its plan, status, interval, or Stripe price, is recorded in
+the organization's audit log as `billing:subscription.changed`, whether it came from a webhook, Checkout
+confirmation, or reconciliation. Its `SubscriptionChange` detail has the plan, status, and estimated monthly
+amount before and after, which is what [revenue movement](/docs/next-saas/features/usage-analytics#revenue-movement)
+is analyzed from.
 
 ![Active Subscription with Stripe Billing](/img/next-saas/billing-subscription.png)
 

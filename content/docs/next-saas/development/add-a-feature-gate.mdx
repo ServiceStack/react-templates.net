@@ -40,7 +40,7 @@ Add the declarative attribute to each protected request DTO:
 public class QueryWidgets : IGet, IReturn<QueryWidgetsResponse> { }
 ```
 
-`Configure.Saas.cs` resolves the organization and local subscription projection before the service runs. Missing access returns HTTP `403` with `FeatureNotEntitled`.
+`Configure.Saas.cs` checks the feature against the local subscription projection of the organization the request is for, before the service runs. The Request DTO implements `IRequireWorkspace` to say which organization that is. Missing access returns HTTP `403` with `FeatureNotEntitled`.
 
 The DTO attribute is the primary boundary. UI hiding improves usability but is not authorization.
 

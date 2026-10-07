@@ -36,8 +36,8 @@ Monitor last successful retention run, rows deleted by category, oldest eligible
 When adding a tenant-owned table or object:
 
 1. classify ownership and required retention;
-2. include it in export if portable;
-3. include it in organization deletion;
+2. a table implementing `IHasWorkspaceId` is exported and deleted with its organization by default; add it to `WorkspaceData.NotExported` or `KeptAfterDeletion`, with the reason, if it should not be;
+3. include objects outside those tables, such as files in another store, in export and deletion yourself;
 4. add normal retention only when appropriate;
 5. apply legal hold consistently;
 6. add counts, audit, tests, and operator visibility.

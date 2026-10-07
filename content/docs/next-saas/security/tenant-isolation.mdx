@@ -5,36 +5,209 @@ description: "The internal Workspace is the tenant boundary shown to customers a
 
 [Security](/docs/next-saas/security) · [Organizations and tenancy](/docs/next-saas/concepts/organizations-and-tenancy)
 
-## Context resolution
+## The model
 
-`WorkspaceContextResolver` returns the organization, active membership, and acting user.
+- One database is shared by every organization. The internal name for an organization is `Workspace`.
+- Each row owned by an organization has a `WorkspaceId`.
+- A user can belong to several organizations, and each request is for one of them.
+- Platform operators are not members of the organizations they administer.
 
-For an interactive cookie session it resolves the active `UserWorkspacePreference`, verifies an active membership, and loads a non-deleted organization. For API-key requests it ignores browser preference and resolves the organization stored on that credential, then verifies the key owner still has active membership.
+The risk in this model is a query that forgets its organization: it returns another customer's data and nothing fails. The template moves that responsibility from each query to the database connection, using OrmLite [connection filters](https://docs.servicestack.net/ormlite/connection-filters), and makes forgetting it fail.
 
-Never accept a customer-provided `WorkspaceId` as authorization. IDs in routes and payloads identify candidate resources only after the caller's tenant context is known.
+## Classify every table
 
-## Query pattern
+Every table is one of three kinds, recorded in `features.json` and in its class:
 
-Customer-resource queries include the tenant predicate:
+| Kind | Meaning | In code |
+| --- | --- | --- |
+| `tenantOwned` | Every row belongs to one organization | Implements `IHasWorkspaceId` |
+| `global` | Shared by every organization, such as plans | No `WorkspaceId` |
+| `platformOperational` | Run by the platform and not about one organization, such as Stripe events | No `WorkspaceId` |
 
 ```csharp
-var widget = Db.Single<Widget>(x =>
-    x.Id == request.Id &&
-    x.WorkspaceId == context.Workspace.Id)
-    ?? throw new HttpError(404, "WidgetNotFound", "The widget was not found.");
+[UniqueConstraint(nameof(WorkspaceId), nameof(IdempotencyKey))]
+[CompositeIndex(nameof(WorkspaceId), nameof(Status), nameof(CreatedDate))]
+public class StoredFile : SaasAuditBase, IHasWorkspaceId
+{
+    [PrimaryKey] public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    [References(typeof(Workspace))] public string WorkspaceId { get; set; } = default!;
+    // ...
+}
 ```
 
-Return `404` for inaccessible resource IDs where distinguishing “exists elsewhere” would leak tenant information. Include indexed `WorkspaceId` on tenant-owned tables and use composite unique constraints for organization-scoped business keys.
+Two rules keep the classification useful:
 
-![Tenant-Scoped Query Pattern](/img/next-saas/scoped-query.png)
+- **A table's rows all belong to an organization, or none do.** A nullable `WorkspaceId` means a table holds two kinds of row, and a row that forgets its organization is silently written with none. The audit log is two tables for this reason: `SaasAuditEvent` for what happened in an organization, and `PlatformAuditEvent` for what operators did that is not about one.
+- **Do not own a table indirectly.** A table that only reaches its organization through a parent row cannot be filtered. Give it its own `WorkspaceId`.
 
-## Storage, jobs, and analytics
+Every tenant-owned table also has an index, unique constraint, or primary key that starts with `WorkspaceId`, because every query on it is filtered by it. Business keys are unique within an organization, not globally.
 
-- File object keys are opaque and metadata is tenant-bound; physical paths are never accepted from users.
-- Background-job payloads use durable identifiers, then re-read and revalidate organization state.
-- Usage idempotency keys are unique within an organization.
-- Analytics dimensions are controlled by meter configuration and do not create cross-tenant groupings.
-- Exports and downloads verify tenant ownership again when retrieved.
+## The request says which organization it is for
+
+A user can have different organizations open in different browser tabs, so an API for an organization says which one in its Request DTO by implementing `IRequireWorkspace`:
+
+```csharp
+[ValidateIsAuthenticated]
+[Route("/saas/files/{Id}", "DELETE")]
+public class DeleteStoredFile : IDelete, IReturn<EmptyResponse>, IRequireWorkspace
+{
+    public string WorkspaceId { get; set; } = default!;
+    [ValidateNotEmpty] public string Id { get; set; } = "";
+}
+```
+
+The `WorkspaceId` is a claim, not a credential. It only says which organization the request is for. Whether the caller can use it comes from their persisted membership, which is checked on every request.
+
+| Request | Result |
+| --- | --- |
+| No `WorkspaceId` | `400 WorkspaceIdRequired` |
+| An organization the caller is not an active member of, or that does not exist | `403 WorkspaceAccessDenied` |
+| Sent with an API key for another organization | `403 WorkspaceAccessDenied` |
+| Sent with an API key, without a `WorkspaceId` | The key's organization |
+
+The browser keeps each tab's organization and passes it with every call. See [Organizations and tenancy](/docs/next-saas/concepts/organizations-and-tenancy#active-organization-selection).
+
+## Connections are confined to the organization
+
+The AppHost configures every connection opened for a request with `SaasDb.ForRequest()`. This covers `Db` in services and the connections opened by AutoQuery.
+
+```csharp
+public override void Configure()
+{
+    DbConnectionRequestFilters.Add((db, req) => db.ForRequest(req));
+}
+```
+
+The connection is disposed if `ForRequest()` throws, for example when the user isn't a member of the organization.
+
+```csharp
+public static IDbConnection ForRequest(this IDbConnection db, IRequest request)
+{
+    // Audit columns record who made the request: the signed-in user, or the user of its API key
+    db.SetUserId(request.GetUserId());
+
+    // Every connection a request opens shares one scope, which starts without an organization.
+    // Setting the organization on the scope confines all of them.
+    if (!request.Items.TryGetValue(nameof(WorkspaceScope), out var existing) || existing is not WorkspaceScope scope)
+        request.Items[nameof(WorkspaceScope)] = scope = new WorkspaceScope();
+    db.ForWorkspace(scope);
+
+    // An API key is for the organization it was created for
+    var apiKeyWorkspaceId = request.GetApiKey()?.RefIdStr;
+
+    // An API for an organization says which one in its Request DTO. The first connection opened for it
+    // checks the user is a member of that organization, and that it's in a state the API can be used in.
+    if (request.Dto is IRequireWorkspace requireWorkspace && !scope.HasMember)
+    {
+        if (!apiKeyWorkspaceId.IsNullOrEmpty())
+        {
+            // A request sent with an API key doesn't need to say which organization, but can't say another
+            if (requireWorkspace.WorkspaceId.IsNullOrEmpty())
+                requireWorkspace.WorkspaceId = apiKeyWorkspaceId!;
+            else if (requireWorkspace.WorkspaceId != apiKeyWorkspaceId)
+                throw new HttpError(403, "WorkspaceAccessDenied", "This API key is for another organization.");
+        }
+
+        // Fails unless the user is a member of the organization, and it's in a state the API can be used in
+        var (workspace, member) = request.TryResolve<ISaasManager>().AssertMembership(db, requireWorkspace.WorkspaceId,
+            WorkspaceAccessPolicy.For(requireWorkspace.GetType(), request.Verb));
+
+        // Confines every connection of the request, and is what its Services use: Db.GetWorkspaceScope()
+        scope.Confine(workspace, member);
+    }
+
+    // Any other request sent with an API key can only use the key's organization
+    if (!apiKeyWorkspaceId.IsNullOrEmpty())
+        scope.Confine(apiKeyWorkspaceId!);
+
+    return db;
+}
+```
+
+The filters are declared once in a `FilterSet`, which reads the organization from the request's scope for each statement and throws until it has one. `ForWorkspace(scope)` uses it with the request's scope:
+
+```csharp
+public static readonly FilterSet<WorkspaceScope> WorkspaceFilters = FilterSet.Create<WorkspaceScope>(f => {
+    f.Ensure<IHasWorkspaceId>(x => x.WorkspaceId, s => s.AssertWorkspaceId());
+    f.Filter<Workspace>((x, s) => x.Id == s.AssertWorkspaceId());
+    // API keys aren't filtered until the request's organization is resolved
+    f.Filter<ApiKeysFeature.ApiKey>((x, s) => s.WorkspaceId == null || x.RefIdStr == s.WorkspaceId);
+});
+
+db.SetItem(ScopeItem, scope).UseFilters(WorkspaceFilters.For(scope));
+```
+
+Tables that implement `IHasWorkspaceId`, and `Workspace` itself, are therefore **fail closed**:
+
+| When | Behavior |
+| --- | --- |
+| A request that is not for an organization | Any query or write on a tenant-owned table throws |
+| A request for an organization the caller is a member of | Selects, updates, and deletes only match that organization's rows |
+| Inserting a row without a `WorkspaceId` | The row gets the connection's organization |
+| Writing a row for another organization | Throws, instead of silently changing no rows |
+
+A service queries tenant-owned tables without repeating the organization, and reads the verified organization and membership from the connection's scope:
+
+```csharp
+var widget = Db.SingleById<Widget>(request.Id)
+    ?? throw new HttpError(404, "WidgetNotFound", "The widget was not found.");
+
+Db.Insert(new Widget { Name = request.Name });   // WorkspaceId is set by the connection
+
+var scope = Db.GetWorkspaceScope();              // scope.Workspace, scope.Member, scope.UserId, scope.IsAdmin
+```
+
+Consequences worth knowing:
+
+- **A lookup by ID is safe.** It returns `null` for a row in another organization, so return `404` for inaccessible resource IDs: distinguishing “exists elsewhere” would leak tenant information.
+- **An API that forgets `IRequireWorkspace` fails** the request instead of returning another organization's data. This includes AutoQuery APIs over tenant-owned tables, which implement it too.
+- **A scope cannot move.** Once a request is confined to an organization it cannot be pointed at another, because the queries that already ran were confined to the first.
+- **The check has happened before the service runs.** A request filter in `Configure.Saas.cs` opens the request's connection for every `IRequireWorkspace` API, whenever the service first uses `Db`.
+
+## Organization state
+
+An organization can be suspended by an operator, read-only, or pending deletion. That is checked with the caller's membership, from the access each API needs, so no service checks organization status itself:
+
+| `WorkspaceAccess` | For | Suspended | Read-only or pending deletion |
+| --- | --- | --- | --- |
+| `Account` | The organization itself: dashboard, billing, members, notifications, export, deletion | Allowed | Allowed |
+| `Read` | Reading product data. The default for `GET` APIs | `403 WorkspaceSuspended` | Allowed |
+| `Write` | Changing product data. The default for other APIs | `403 WorkspaceSuspended` | `423 WorkspaceReadOnly` |
+
+An API only says what it needs when that is not the default for its HTTP method:
+
+```csharp
+[WorkspaceAccess(WorkspaceAccess.Account)]
+public class LeaveWorkspace : IPost, IReturn<EmptyResponse>, IRequireWorkspace
+```
+
+`Account` keeps the customer able to fix things: they can always see why their organization is unavailable, pay, export their data, and cancel a deletion. This is deliberately not a connection rule, because reads legitimately write, such as reading usage maintaining its periods. Confinement decides which rows are reachable, and this decides whether the request may proceed. Role and entitlement checks are still separate.
+
+## Working across organizations
+
+Code that is not limited to one organization opts out explicitly with `AcrossWorkspaces()`, which returns the same connection and transaction without the organization filter. It still records who is writing.
+
+| Code | Connection |
+| --- | --- |
+| Checking the caller is a member of the organization a request is for | `ISaasManager.AssertMembership()` uses `db.AcrossWorkspaces()` for the lookup, then `ForRequest()` confines the request |
+| Account-level APIs that are not for one organization, such as `GetMyWorkspaces`, `SwitchWorkspace`, and `CreateOrganization` | `Db.AcrossWorkspaces()` |
+| Checks that are unique across organizations, such as the organization slug | `Db.AcrossWorkspaces()` for that query only |
+| Platform APIs that list or search customers | `PlatformDb`, after the capability check |
+| Platform APIs that act on one customer | `RequireCustomer(workspaceId)` confines the request to that customer |
+
+The last row matters. An operator's request about one customer is confined to that customer, so the rest of the API cannot read or write anyone else's rows. This is also what limits a support session to the organization its grant is for. Only genuine listings across customers are unconfined.
+
+`ArchitectureGuardTests` limits `AcrossWorkspaces()`, `OpenAcrossWorkspaces()` and `WithoutFilters()` to an allow-list of files, so each new use is reviewed.
+
+Code on a confined connection never writes the `WorkspaceId` condition itself. Writing it anyway would hide a connection that isn't confined, whose queries would otherwise fail closed, so a guard test only allows a `WorkspaceId` condition in the files that work across organizations. Code that's given a connection and relies on it being confined, like `SaasManager`'s usage methods, calls `db.AssertConfinedTo(workspace.Id)` first, so it fails instead of reading every organization's rows when it's given one that isn't.
+
+## What the connection does not cover
+
+- **Raw SQL.** Filters apply to typed OrmLite APIs. Complete statements passed to `ExecuteSql`, `SqlList`, or `SqlScalar` are not changed, so they must include the `WorkspaceId` and set their own audit columns. The two usage counters in `SaasManager` that also track a peak do this; reservations use the typed `UpdateAdd()`, which is filtered and audited like any other typed API. They are written with `Sql.Fmt()`, which sends every interpolated value as a database parameter. A guard test limits raw SQL to an allow-list of files, and fails when a statement is not written with `Sql.Fmt()`.
+- **Connections you open yourself.** A background job or command is not run for a request, so it opens its own connection. Use `dbFactory.OpenForWorkspace(workspaceId, "job-name")` when the work is for one organization. Use `dbFactory.OpenAcrossWorkspaces("job-name")` and keep explicit `WorkspaceId` conditions when it processes several. A guard test fails when a connection is opened with `dbFactory.Open()`, which is not confined. See [Background processing](/docs/next-saas/concepts/background-processing#tenant-and-authorization-safety).
+- **Plugins that open a connection without the request.** A connection is only confined when it is opened for the request: `HostContext.AppHost.GetDbConnection(req)` is, `dbFactory.Open()` is not. The API Keys feature opens the request's connection for its own APIs.
+- **Stored files.** The file store takes a key and returns bytes, so keys are created and checked per organization. See [File storage](/docs/next-saas/features/file-storage#storage-model).
+- **Authorization.** Confinement decides which organization's rows are reachable. Role and entitlement checks are still required.
 
 ## Platform access
 
@@ -42,7 +215,11 @@ Customer 360 is an explicit platform path with capability filtering and redacted
 
 ## Testing strategy
 
-For every new tenant-owned resource:
+`TenantIsolationTests` runs against every table implementing `IHasWorkspaceId`: it seeds two organizations and asserts that a confined connection cannot read, update, or delete the other organization's rows, that inserts get the connection's organization, and that a connection without an organization throws. A new tenant-owned table is covered by implementing the interface.
+
+`ArchitectureGuardTests` fails when a table is not classified, when a tenant-owned table has no index that starts with `WorkspaceId`, when a Request DTO with a `WorkspaceId` does not implement `IRequireWorkspace`, and when an API that API keys can call is not for an organization.
+
+In addition, for every new tenant-owned resource:
 
 1. create organizations A and B;
 2. give one user different roles in each;
@@ -50,6 +227,8 @@ For every new tenant-owned resource:
 4. attempt list, read, update, delete, export, job, and API-key access across tenants;
 5. test inactive membership and deleted/suspended organization state;
 6. inspect error bodies, timing, audit, and logs for information leakage.
+
+The tests do not cover an API whose Request DTO forgets `IRequireWorkspace`. It fails on its first request, so call each new API once against a running application. See [Testing](/docs/next-saas/development/testing#what-the-tests-do-not-cover).
 
 ![Tenant Isolation and Cross-Tenant Rejection Test](/img/next-saas/isolation-test.png)
 

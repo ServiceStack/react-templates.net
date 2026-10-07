@@ -37,7 +37,7 @@ Examples: stored objects, storage bytes, seats, active projects.
 
 Customer pages label counters as **Per period** and gauges as **Current total**, and show enforcement modes as **Hard limit**, **Soft limit**, or **Metered overage**. Allowance bars use cobalt below 80% consumption, amber from 80%, and red at 100%.
 
-Public `RecordUsage` rejects gauge changes. Product operations and privileged corrections use explicit adjustments with idempotency, actor, and reason.
+Public `RecordUsage` rejects gauge changes. Product operations and privileged corrections use explicit adjustments with idempotency, user, and reason.
 
 ### Reservation
 
@@ -54,6 +54,8 @@ Examples: uploads, batch jobs, generation work with a bounded maximum.
 - `UsageDailyRollup` supports bounded analytics queries.
 
 The event/aggregate write is performed transactionally. A conditional aggregate update prevents two concurrent requests from both consuming the final unit.
+
+Usage writes run in `db.RunInTransaction()`, so a transaction that fails with a deadlock or serialization failure is rolled back and run again, as set by the `OrmLiteConfig.RetryPolicy` in `Configure.Db.cs`. This applies to PostgreSQL, SQL Server and MySQL. SQLite isn't retried, as its driver already waits for locks. See [Retrying Temporary Errors](https://docs.servicestack.net/ormlite/retries).
 
 ![Quota Enforcement Boundary](/img/next-saas/quota-boundary.png)
 
@@ -105,7 +107,8 @@ Deletion runs asynchronously, removes the object idempotently, writes linked neg
 
 `MeterReset` may be:
 
-- `BillingPeriod` — aligned to the local subscription period;
+- `BillingPeriod` — aligned to the local subscription period, or to calendar months while `FreeFallback`
+  applies, because the period of a subscription that's canceled or unpaid no longer advances;
 - `CalendarMonth` — aligned to calendar boundaries;
 - `Never` — retained gauge state.
 

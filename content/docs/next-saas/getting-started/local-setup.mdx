@@ -97,9 +97,11 @@ Populate the selected local database with a repeatable product-tour dataset:
 
 <CopyBlock>{`./scripts/seed-example-data.sh`}</CopyBlock>
 
-The script creates six example organizations with active, trialing, and past-due subscriptions,
-plus usage history, downloadable example documents, team members, notifications, audit events,
-and Operations Center activity. Sign in as `manager@email.com` for the populated Northstar Labs
+The script creates fifty example organizations, each with a year of history: subscriptions that
+start, convert from trials, upgrade, downgrade, fall past due, or cancel, with their invoices and
+Stripe events; members who join over time; daily usage by each member within their plan's
+allowances; and the platform's daily metrics, including MRR and ARR. It also adds downloadable
+example documents, notifications, support notes, audit events, and Operations Center activity. Sign in as `manager@email.com` for the populated Northstar Labs
 customer experience or `admin@email.com` for the cross-customer operator views.
 
 The task is idempotent, follows the database provider selected by `.env`, and refuses to run

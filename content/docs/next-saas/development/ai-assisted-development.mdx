@@ -47,7 +47,7 @@ For reviewable results, ask for:
 
 Agents should preserve unrelated worktree changes, use migrations or explicit development resets appropriately, and never commit secrets, SQLite databases, uploaded files, build output, or data-protection keys.
 
-Do not let an agent infer authorization from UI visibility, a browser-supplied organization ID, or a Stripe response on every request. Direct it back to `WorkspaceContextResolver`, local subscription projections, and effective entitlements.
+Do not let an agent infer authorization from UI visibility, a browser-supplied organization ID, or a Stripe response on every request. Direct it back to `IRequireWorkspace` and `Db.GetWorkspaceScope()`, local subscription projections, and effective entitlements.
 
 ## Prompt example
 

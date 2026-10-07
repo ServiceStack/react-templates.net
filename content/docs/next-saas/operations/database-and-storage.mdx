@@ -52,6 +52,8 @@ For retained customer data, changing `Database.Provider` is not a data migration
 
 Monitor active connections, pool exhaustion, query latency, locks, deadlocks, storage growth, replication lag, and backup age. Quota admission relies on transactions and conditional updates, so database correctness and lock behavior matter.
 
+Deadlocks, serialization failures, throttling and lost connections are retried by the `OrmLiteConfig.RetryPolicy` in `Configure.Db.cs`. Statements the database confirmed weren't applied are run again, while writes whose connection was lost aren't, as they may have been saved. Retries are logged at the `Debug` level. Use the policy's `OnRetry` to record them in your metrics, where a rising rate is an early sign of lock contention.
+
 Run maintenance and index analysis using PostgreSQL-native tooling. Avoid direct manual edits to subscription, aggregate, or lifecycle rows; use audited application workflows or a reviewed migration.
 
 ## File store

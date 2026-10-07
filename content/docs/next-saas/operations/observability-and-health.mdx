@@ -42,6 +42,16 @@ Treat request logs as diagnostics, not metering, billing, or audit truth. Restri
 
 Attach OpenTelemetry or a vendor listener in the host without changing product services. Add low-cardinality tags only; never use organization IDs, emails, API keys, filenames, or Stripe IDs as metric labels.
 
+### Which organization
+
+“Which customer caused this?” should be answerable without reproducing it. Confining a connection is the one place every request and job for an organization passes through, so that is where it is recorded:
+
+- The current trace is tagged `saas.workspace_id` (`SaasTelemetry.WorkspaceTag`).
+- Request log entries carry the same tag in their `Meta`.
+- Jobs for one organization are queued with `jobs.EnqueueForWorkspace<TCommand>(workspaceId, request)`, which sets the job's `TenantId` to the organization so its jobs can be found in the jobs dashboard.
+
+It is deliberately not a dimension of the metrics. One time series per organization does not scale in a metrics store. Use traces and logs to find the organization, and metrics for the totals.
+
 ## Minimum alerts
 
 - `/ready` failure or restart loop;

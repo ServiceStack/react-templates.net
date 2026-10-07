@@ -13,7 +13,7 @@ description: "The notification subsystem provides in-app and email delivery, cus
 - `POST /saas/notifications/{Id}/read`
 - `POST /saas/admin/notifications/{Id}/retry`
 
-Preferences are stored per user, organization, template key, and channel. A template-specific preference wins over the `*` fallback.
+Preferences are stored per user, organization, template key, and channel, so a member of two organizations can choose differently in each. A template-specific preference wins over the `*` fallback. Notifications that belong to no organization, such as account security emails, have no preferences and are always sent.
 
 ## Delivery flow
 

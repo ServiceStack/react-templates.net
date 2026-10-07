@@ -35,7 +35,7 @@ In Development, ASP.NET Core starts and proxies the Next.js development server f
 A normal customer request passes through these boundaries:
 
 1. ASP.NET Core Identity or a ServiceStack API key authenticates the caller.
-2. `IWorkspaceContextResolver` reloads active membership and establishes the organization.
+2. The request's database connection checks the caller is an active member of the organization the request is for (its `WorkspaceId`), and is confined to it.
 3. `IEntitlementResolver` decides whether the effective plan permits the feature.
 4. `ISaasManager` evaluates local subscription access and quota state.
 5. The service reads or changes only records belonging to the verified organization.
@@ -72,9 +72,8 @@ Dependencies point inward through contracts and interfaces. Product services sho
 
 ## Important extension interfaces
 
-- `IWorkspaceContextResolver` — resolves verified organization membership.
 - `IEntitlementResolver` — computes effective feature access.
-- `ISaasManager` — manages plans, access modes, usage, quotas, reservations, and organizations.
+- `ISaasManager` — manages plans, access modes, usage, quotas, reservations, organizations, and verified membership.
 - `IFileStore` — streams opaque file objects independent of a storage vendor.
 - `INotificationManager` — creates deduplicated notification intents.
 - `IStripeBillingGateway` — isolates Stripe catalog, checkout, and reconciliation behavior.
@@ -135,7 +134,7 @@ Examples include webhook processing, file deletion, export creation, notificatio
 ## Architectural invariants
 
 - Authentication is not tenant authorization.
-- Organization context is resolved server-side for every customer operation.
+- Every customer operation says which organization it is for, and the caller's membership of it is verified server-side.
 - Published plan versions are immutable contracts.
 - Customer exceptions are explicit, time-bound where appropriate, and audited.
 - Stripe owns money; local state owns request-time access.

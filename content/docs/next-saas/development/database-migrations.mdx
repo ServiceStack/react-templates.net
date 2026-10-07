@@ -9,9 +9,22 @@ description: "Next SaaS uses EF Core for ASP.NET Core Identity and ServiceStack 
 
 Product entities live in `MyApp.ServiceModel`; numbered migrations live in `MyApp/Migrations` and inherit `MigrationBase`.
 
+A migration declares its own copy of each table it creates or changes, as the table is at that migration, instead of
+using the App's model. The App's model is the latest version of the table and changes in later migrations, which would
+change what an earlier migration creates:
+
 ```csharp
 public class Migration1002 : MigrationBase
 {
+    // The table as this migration creates it, a copy of the App's Widget model
+    public class Widget
+    {
+        [PrimaryKey] public string Id { get; set; } = Guid.NewGuid().ToString("N");
+        [Index] public string WorkspaceId { get; set; } = default!;
+        public string Name { get; set; } = "";
+        public DateTime CreatedDate { get; set; }
+    }
+
     public override void Up()
     {
         Db.CreateTable<Widget>();
@@ -23,6 +36,10 @@ public class Migration1002 : MigrationBase
     }
 }
 ```
+
+Its base classes and enums are copied into the migration too, like `Migration1000` copies `SaasAuditBase` and the
+enums of its tables. `MigrationSchemaTests` runs every migration and checks the tables they create are the same as
+the App's models, so a model that changes without a migration fails the tests.
 
 Use a new migration number in any derived application whose database has been shared, deployed, or contains data that matters. Keep `Up` and `Down` deterministic and avoid network/provider calls.
 

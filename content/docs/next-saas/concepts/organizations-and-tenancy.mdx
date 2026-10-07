@@ -9,28 +9,40 @@ description: "The UI calls a customer boundary an Organization. Internal DTOs an
 
 Registration creates either a private Individual workspace or a Business organization. Both use the same internal `Workspace` model and tenant isolation. An Individual workspace has one member and no invitations; a Business organization supports team roles and invitations. A user may later create and switch to a separate Business organization.
 
-`IWorkspaceContextResolver` is the mandatory boundary for tenant-facing services. It starts with an authenticated identity, reloads active membership, and returns the verified `Workspace`, `WorkspaceMember`, user ID, and effective role.
-
-A client-provided organization or resource ID only identifies what the caller wants. Authorization comes from persisted membership and an organization-scoped query.
+A user can belong to several organizations, and can have different ones open in different browser tabs. So every API for an organization says which one in its Request DTO, by implementing `IRequireWorkspace`:
 
 ```csharp
-var context = workspaceContexts.Resolve(Db, await GetSessionAsync(), Request);
+public class QueryStoredFiles : IGet, IReturn<QueryStoredFilesResponse>, IRequireWorkspace
+{
+    public string WorkspaceId { get; set; } = default!;
+}
 ```
 
-Product services should pass this resolved context into entitlement, access, quota, storage, and audit operations rather than reconstructing it.
+A client-provided organization or resource ID only identifies what the caller wants. Authorization comes from persisted membership and a database connection that is confined to the organization. Before an `IRequireWorkspace` API runs, its database connection checks the caller is an active member of the organization (`ISaasManager.AssertMembership()`), and the request's connections are confined to it. Services read the verified `Workspace`, `WorkspaceMember`, user ID, and effective role with:
+
+```csharp
+var scope = Db.GetWorkspaceScope();
+```
+
+An API that uses a tenant-owned table without implementing `IRequireWorkspace` throws.
+
+Product services should pass the organization and membership from this scope into entitlement, access, quota, storage, and audit operations rather than looking them up again.
 
 ## Active organization selection
 
-One identity can belong to multiple organizations. `UserWorkspacePreference` stores the identity’s current selection.
+One identity can belong to multiple organizations, and can work in different ones in different browser tabs. The server never infers which organization a request is for: the client passes it with every call.
 
-- `GetMyWorkspaces` returns verified active memberships only.
-- `SwitchWorkspace` rejects an organization outside that set.
-- The application shell reloads organization state after an explicit switch.
-- API keys do not follow the browser’s active preference; each key is permanently bound to its organization.
+```ts
+const api = await client.api(new QueryStoredFiles({ workspaceId: tabWorkspaceId() }))
+```
+
+- Each tab keeps its organization in `sessionStorage` (`lib/gateway.ts`), so switching in one tab does not change another.
+- Pages wrapped in `ValidateAuth()` wait until the tab's organization is known before they render.
+- `GetMyWorkspaces` returns verified active memberships only, and `SwitchWorkspace` rejects an organization outside that set.
+- `UserWorkspacePreference` stores the organization the user last switched to. It is only used to choose the organization a new tab starts in, falling back to an organization they own, then the one they have been in longest.
+- API keys do not follow the browser's selection; each key is permanently bound to its organization.
 
 ![Organization Switcher](/img/next-saas/organization-switcher.png)
-
-If the preference is missing or invalid, the resolver selects an active membership using deterministic fallback rules and persists the selection.
 
 ## Customer roles
 
@@ -54,7 +66,7 @@ Role checks are centralized in `WorkspaceAuthorization`. UI visibility reflects 
 
 ## Platform roles are separate
 
-Platform operators are not organization members by implication:
+Platform operators are not organization members by implication. Platform APIs that act on one customer confine their request to that customer's organization, and those that list customers opt out explicitly after their capability check:
 
 | Platform role | Scope |
 | --- | --- |
@@ -78,28 +90,30 @@ Individual workspaces reject invitations, including acceptance of a previously i
 
 ## Tenant-owned queries
 
-Every tenant record lookup must include the verified organization:
+Tables that implement `IHasWorkspaceId` are confined to the request's organization by the database connection, so a lookup cannot return another organization's row:
 
 ```csharp
-var file = Db.Single<StoredFile>(x =>
-    x.Id == request.Id &&
-    x.WorkspaceId == context.Workspace.Id);
+var file = Db.SingleById<StoredFile>(request.Id);          // null if it belongs to another organization
+var files = Db.Select<StoredFile>(x => x.Status != StoredFileStatus.Deleted);
 ```
 
-Avoid loading by primary key and checking later, particularly before returning data or acting on an object-store key. Apply the boundary in reads, updates, deletes, downloads, analytics, exports, caches, and job commands.
+The same confinement applies to updates and deletes, and new rows get the connection's organization. See [Tenant isolation](/docs/next-saas/security/tenant-isolation) for how it is enforced, the explicit opt-out for code that works across organizations, and what it does not cover.
+
+Connections that are not opened for a request say whether they are confined when they are opened. Background jobs and commands open one with `dbFactory.OpenForWorkspace(workspaceId, "job-name")`, or with `dbFactory.OpenAcrossWorkspaces("job-name")` and explicit `WorkspaceId` conditions when they process every organization. Raw SQL always keeps an explicit `WorkspaceId` condition. Apply the boundary in downloads, analytics, exports, caches, and job commands.
 
 ![Tenant Isolation and Cross-Tenant Rejection Test](/img/next-saas/isolation-test.png)
 
 ## API keys
 
-ServiceStack API keys are bound using `RefIdStr = WorkspaceId`. Resolution requires:
+ServiceStack API keys are bound using `RefIdStr = WorkspaceId`, which the request that creates one has to supply. A request sent with a key requires:
 
 - an active, non-revoked key;
 - an explicit organization binding;
 - an active membership for the key’s user in that organization;
+- an API that allows keys, with a scope the key has;
 - applicable feature and rate-limit policy.
 
-Changing the user’s browser-selected organization does not change the API key. Raw keys are shown only once; later lists expose a safe visible fingerprint.
+A request sent with a key is for the key's organization. It does not need to send a `WorkspaceId`, and is rejected if it sends another organization's. Raw keys are shown only once; later lists expose a safe visible fingerprint. See [API keys](/docs/next-saas/features/api-keys).
 
 ## Files and exports
 
@@ -110,31 +124,64 @@ workspaces/{workspace-id}/files/{opaque-id}
 workspaces/{workspace-id}/exports/{lifecycle-request-id}.zip
 ```
 
-Original names remain metadata. Authorization loads the exact organization-owned row before opening or deleting its object. Export construction queries each included table by `WorkspaceId` and writes to an organization-specific object key.
+Original names remain metadata. Keys are created and checked by a store for one organization (`files.ForWorkspace(workspaceId)`), which rejects a key from another organization before the store is asked. Export construction runs on a connection confined to the organization, covers every tenant-owned table unless it is deliberately excluded, and writes to an organization-specific object key. See [File storage](/docs/next-saas/features/file-storage) and [Data lifecycle](/docs/next-saas/features/data-lifecycle).
 
 ## Background jobs
 
-Job messages carry stable resource identifiers, not trusted serialized customer state. A worker reloads the row, its current organization, status, policy, and relevant provider state before acting.
+Job messages carry the organization and stable resource identifiers, not trusted serialized customer state. A worker confines its connection to that organization before it reads anything, then reloads the row, its status, policy, and relevant provider state before acting.
 
-This matters when access, a legal hold, deletion status, or membership changes while work is queued.
+This matters when access, a legal hold, deletion status, or membership changes while work is queued. See [Background processing](/docs/next-saas/concepts/background-processing#tenant-and-authorization-safety).
+
+## Audit columns
+
+Tables deriving from `SaasAuditBase` have `CreatedDate`, `CreatedBy`, `ModifiedDate`, and `ModifiedBy`. They are set by the connection that writes the row rather than by each write, and a value assigned by application code is replaced.
+
+| Connection | Recorded as |
+| --- | --- |
+| Opened for an authenticated request | The signed-in user |
+| Opened by a background job or command | Its name, e.g. `dbFactory.OpenAcrossWorkspaces("retention-job")` |
+| Any other connection | `system` |
+
+Code that is told who it is writing for, or a policy applied by the system during a user's request, sets the user id for a block of writes:
+
+```csharp
+using (db.WithUserId("lifecycle-policy"))
+    db.Update(subscription);
+```
+
+The rules replace any value the code assigns. Data that must keep its own audit dates, such as the example data `ExampleDataSeeder` writes with dates in the past, is written on `db.WithoutFilters()`, which is limited to reviewed files.
+
+`Insert` and `Update` leave the row with the values the connection wrote, including its `WorkspaceId`, so it can be returned to the caller without reading it back.
+
+- Never assign audit columns. `CreatedDate` and `CreatedBy` have `[IgnoreOnUpdate]`, so an update that writes every column cannot change them.
+- Jobs and system policies are not users and have no account, so they record their name as the user ID, such as `retention-job` or `stripe`. Anything that joins these columns to users has to allow for that.
+- Work a job does on a user's behalf writes as that user, such as deleting a file they asked to delete.
+- Data seeded with its own audit dates is written with `WithoutFilters()`, as `ExampleDataSeeder` does.
+
+Audit columns answer who last wrote a row. `SaasAuditEvent` remains the record of what happened and why.
 
 ## Adding tenant-owned data
 
 When adding a table:
 
-1. Add a required, indexed `WorkspaceId` unless the ownership is indirect and rigorously enforced.
-2. Classify the table as `tenantOwned` in `features.json`.
-3. Scope every service query and mutation to the resolved organization.
-4. Include it deliberately in export, retention, and deletion policy.
-5. Avoid customer-provided object-store paths and cache keys.
-6. Add cross-organization read, update, delete, download, and job tests.
-7. Decide what platform Support, BillingAdmin, and Admin roles may see, including redaction.
+1. Implement `IHasWorkspaceId` with a required `WorkspaceId` that references `Workspace`, which confines the table to the request's organization. `TenantIsolationTests` then covers it automatically.
+2. Derive from `SaasAuditBase` so its audit columns are set by the connection.
+3. Give it an index or unique constraint that starts with `WorkspaceId`, and make business keys unique within an organization.
+4. Classify the table as `tenantOwned` in `features.json` and create it in the migration. Guard tests check steps 1 to 4.
+5. Implement `IRequireWorkspace` in the Request DTO of each API that uses it, including AutoQuery APIs. Then query it without a `WorkspaceId` condition and insert it without one, which a guard test enforces outside the files that work across organizations.
+6. Add `[WorkspaceAccess]` to APIs that need something other than the default for their HTTP method, and pass the tab's organization from the client.
+7. Decide whether it is exported and deleted with its organization. If either answer is no, add it to `WorkspaceData.NotExported` or `KeptAfterDeletion` with the reason, and decide its retention.
+8. If jobs work on it, put the `WorkspaceId` in their payload and confine their connection. Keep explicit `WorkspaceId` conditions in raw SQL.
+9. Avoid customer-provided object-store paths and cache keys.
+10. Decide what platform Support, BillingAdmin, and Admin roles may see, including redaction.
 
 ## Common mistakes
 
 - Treating an authenticated user ID as authorization for all of that user’s organizations.
-- Accepting `WorkspaceId` from the body without reloading membership.
-- Looking up a resource by ID alone.
+- Using a `WorkspaceId` from a request whose DTO does not implement `IRequireWorkspace`, so membership was never checked.
+- Inferring the organization from the one the user last switched to, instead of from the request.
+- Using `AcrossWorkspaces()` where a confined connection would do.
+- Writing raw SQL or opening a connection in a job without an organization condition.
 - Reusing browser active-organization state for API keys.
 - Giving platform Support permanent or implicit customer access.
 - Omitting new customer data from export and deletion workflows.

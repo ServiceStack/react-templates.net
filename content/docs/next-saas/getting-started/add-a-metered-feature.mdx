@@ -91,12 +91,13 @@ public class GenerateReportResponse
 
 ## 4. Implement organization-scoped behavior
 
-The service should resolve the authenticated organization, perform product work, and record usage through `ISaasManager`. Follow existing services for the precise context and subscription helpers.
+The Request DTO implements `IRequireWorkspace`, so the service's connection is confined to the organization the request is for. The service performs product work and records usage through `ISaasManager`, using the organization and membership from `Db.GetWorkspaceScope()`.
 
 The core metering call is:
 
 ```csharp
-var usage = manager.RecordUsage(Db, context.Workspace, subscription, context.UserId,
+var scope = Db.GetWorkspaceScope();
+var usage = manager.RecordUsage(Db, scope.Workspace, subscription, scope.UserId,
     new RecordUsage {
         MeterKey = "reports.generated",
         Units = 1,
